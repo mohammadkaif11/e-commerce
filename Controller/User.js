@@ -292,7 +292,7 @@ function login(req, res, next) {
 }
 
 function logout(req, res, next) {
-  req.session.destroy();
+  req.session=null;  
   res.redirect("/user/login");
 }
 
