@@ -3,16 +3,17 @@ const router = express.Router();
 const userService = require("../Service/user.Service");
 const SendEmail = require("../Service/email.Service");
 const ResetPassword = require("../Service/ResetPasswordEmail.Service");
+const CheckUserLogin=require('../Middleware/UserLogin')
 
 router.get("/signup", signUpView);
-router.get("/login", loginView);
-router.get("/logout", logout);
 router.post("/signup", signUp);
+router.get("/login", loginView);
 router.post("/login", login);
-router.get("/ChangePassword", ChangePasswordView);
-router.post("/ChangePassword", ChangePassword);
-router.get("/ChangeName", ChangeNameView);
-router.post("/ChangeName", ChangeName);
+router.get("/logout", logout);
+router.get("/ChangePassword",CheckUserLogin, ChangePasswordView);
+router.post("/ChangePassword",CheckUserLogin, ChangePassword);
+router.get("/ChangeName",CheckUserLogin, ChangeNameView);
+router.post("/ChangeName",CheckUserLogin, ChangeName);
 router.get("/email", EmailPageView);
 router.get("/VerifyEmail/:id", verfiyEmail);
 router.get("/ForgetPasswordEmail", ForgetPasswordEmailView);
@@ -20,11 +21,12 @@ router.post("/ForgetPasswordEmail", ForgetPasswordEmail);
 router.get("/ForgetPassword/:email", ForgetPasswordView);
 router.post("/ForgetPassword/:email", ForgetPassword);
 
-//ForgetPasswordView
+//ForgetPassoword Email View without LoginUser
 function ForgetPasswordEmailView(req, res) {
-  res.render("Login/ForgetPasswordEmail.ejs", { message: "" });
+  res.render("Login/ForgetPasswordEmail.ejs", { message: "",isValidation:true });
 }
 
+//ForgetPassword Email Post without LoginUser Verify user and send email
 function ForgetPasswordEmail(req, res) {
   try {
     let email = req.body.Email;
@@ -35,23 +37,26 @@ function ForgetPasswordEmail(req, res) {
           ResetPassword(data[0].Email, function (err, data) {
             if (err) {
               res.render("Login/ForgetPasswordEmail.ejs", {
-                message: "Please check email",
+                message: "Email service try after sometime",
+                isValidation:true
               });
             } else {
               res.render("EmailView/EmailPage.ejs", {
-                message: "forget password link have send",
+                message: "Forget password link have send",
               });
             }
           });
         } else {
           res.render("Login/ForgetPasswordEmail.ejs", {
             message: "doest not have account with email",
+            isValidation:true
           });
         }
       })
       .catch((error) => {
         res.render("Login/ForgetPasswordEmail.ejs", {
           message: "Some thing Error",
+          isValidation:true
         });
       });
   } catch (error) {
@@ -59,11 +64,13 @@ function ForgetPasswordEmail(req, res) {
   }
 }
 
+//ForgetPassword View by link using unique email
 function ForgetPasswordView(req, res) {
   let email = req.params.email;
-  res.render("Login/ForgetPassword.ejs", { message: "", email: email });
+  res.render("Login/ForgetPassword.ejs", { message: "", email: email,isValidation:true});
 }
 
+//ForgetPassword post method by link using unique email
 function ForgetPassword(req, res) {
   try {
     let email = req.params.email;
@@ -71,37 +78,45 @@ function ForgetPassword(req, res) {
       res.render("Login/ForgetPassword.ejs", {
         message: "Please Enter same Password",
         email: email,
+        isValidation:true
       });
     } else {
       userService
         .UpdatePasswordbyEmail(email, req.body.Password)
         .then((data) => {
           res.render("Login/ForgetPassword.ejs", {
-            message: "Password is Change",
+            message: "Password is change",
             email: email,
+            isValidation:false,
           });
         })
         .catch((error) => {
-          res.render("Login/ForgetPassword.ejs", { message: "", email: email });
+          res.render("Login/ForgetPassword.ejs", { message: "", email: email,isValidation:true });
         });
     }
   } catch (error) {
-    console.log(error);
+    console.log(error)
     res.render("Error/error.ejs");
   }
 }
 
+//VerfiyEmailView after singup
 function EmailPageView(req, res, next) {
-  res.render("EmailView/EmailPage.ejs", { message: "please verify your mail" });
+  res.render("EmailView/EmailPage.ejs", { message: "please verify your mail we have sended" });
 }
 
+//VerfiyEmail Function after singup
 function verfiyEmail(req, res, next) {
   try {
+    //unique userId
     let id = req.params.id;
     userService
       .VerfiyUser(id)
       .then((data) => {
-        res.redirect("/user/login");
+        res.render("Login/Login.ejs", {
+          message: "Success user is verify",
+          isValidation:false
+        });
       })
       .catch((error) => {
         res.redirect("/user/signup");
@@ -111,6 +126,7 @@ function verfiyEmail(req, res, next) {
   }
 }
 
+//ChangePasswordView With LoginUser
 function ChangePasswordView(req, res, next) {
   res.render("Profile/ChangePassword.ejs", {
     message: "",
@@ -118,6 +134,7 @@ function ChangePasswordView(req, res, next) {
   });
 }
 
+//ChangePasswordView post With LoginUser
 function ChangePassword(req, res) {
   try {
     if (req.body.Password == "" || req.body.ConfirmPassword == "") {
@@ -150,6 +167,7 @@ function ChangePassword(req, res) {
   }
 }
 
+//ChangeNameView with login User
 function ChangeNameView(req, res, next) {
   res.render("Profile/ChangeName.ejs", {
     message: "",
@@ -157,6 +175,7 @@ function ChangeNameView(req, res, next) {
   });
 }
 
+//ChangeNameView post with login User
 function ChangeName(req, res, next) {
   try {
     if (req.body.Name == "" || req.body.ChangeName == "") {
@@ -166,7 +185,7 @@ function ChangeName(req, res, next) {
       });
     } else if (req.body.Name != req.body.ChangeName) {
       res.render("Profile/ChangeName.ejs", {
-        message: "Name and changeName is not Same",
+        message: "Name and changeName is not same",
         username: req.session.userName,
       });
     } else {
@@ -189,14 +208,12 @@ function ChangeName(req, res, next) {
   }
 }
 
+//Signup View
 function signUpView(req, res, next) {
-  res.render("Signup/Signup.ejs", { message: "" });
+  res.render("Signup/Signup.ejs", { message: "",isValidation:true});
 }
 
-function loginView(req, res, next) {
-  res.render("Login/Login.ejs", { message: "" });
-}
-
+//Signup post Function
 function signUp(req, res, next) {
   try {
     if (
@@ -206,6 +223,7 @@ function signUp(req, res, next) {
     ) {
       res.render("Signup/Signup.ejs", {
         message: "Name,email and password are required property",
+        isValidation:true
       });
     } else {
       if (
@@ -213,7 +231,7 @@ function signUp(req, res, next) {
         !IsValidPassword(req.body.Password)
       ) {
         let msg = PasswordValidationMsg();
-        res.render("Signup/Signup.ejs", { message: msg });
+        res.render("Signup/Signup.ejs", { message: msg ,isValidation:true});
       } else {
         userService
           .Register(req.body)
@@ -222,7 +240,8 @@ function signUp(req, res, next) {
               SendEmail(response._id, response.Email, function (err, data) {
                 if (err) {
                   res.render("Signup/Signup.ejs", {
-                    message: "Please Check Email",
+                    message: "Email service have some error",
+                    isValidation:true
                   });
                 } else {
                   res.redirect(`/user/email/`);
@@ -230,13 +249,15 @@ function signUp(req, res, next) {
               });
             } else {
               res.render("Signup/Signup.ejs", {
-                message: "Please signup again",
+                message: "User exits with same email",
+                isValidation:true
               });
             }
           })
           .catch((error) => {
             res.render("Signup/Signup.ejs", {
               message: "Server error please check",
+              isValidation:true
             });
           });
       }
@@ -247,17 +268,23 @@ function signUp(req, res, next) {
   }
 }
 
+//login View
+function loginView(req, res, next) {
+  res.render("Login/Login.ejs", { message: "",isValidation:true });
+}
+
+//login PostMethod
 function login(req, res, next) {
   try {
     if (req.body.Password == "" || req.body.Email == "") {
       res.render("Login/Login.ejs", {
         message: "Email and password is required Property",
+        isValidation:true
       });
     } else {
       userService
         .Login(req.body)
         .then((response) => {
-          console.log("Login response", response);
           if (response != null) {
             req.session.userId = response._id;
             req.session.userName = response.Name;
@@ -276,12 +303,14 @@ function login(req, res, next) {
           } else {
             res.render("Login/Login.ejs", {
               message: "Check email and password is correct or not",
+              isValidation:true
             });
           }
         })
         .catch((error) => {
           res.render("Login/Login.ejs", {
             message: "Server error please check",
+            isValidation:true
           });
         });
     }
@@ -291,11 +320,13 @@ function login(req, res, next) {
   }
 }
 
+//logout
 function logout(req, res, next) {
   req.session=null;  
   res.redirect("/user/login");
 }
 
+//helper function
 //function Check Regularexpression with validpassword
 function IsValidPassword(str) {
   var re = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9_])");
@@ -303,6 +334,7 @@ function IsValidPassword(str) {
   return re.test(str);
 }
 
+//Password Return Message
 function PasswordValidationMsg() {
   let str = `<ul> 
   <li>Password length must be greather 8</li>

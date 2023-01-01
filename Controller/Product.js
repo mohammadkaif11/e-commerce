@@ -11,6 +11,7 @@ router.post("/AddProduct", upload.single("product-image"), AddProduct);
 router.get("/CheckCart", CheckUserLogin, OpenCart);
 router.get("/addCart/:id", CheckUserLogin, AddCart);
 router.get("/GetById/:id", CheckUserLogin, GetById);
+//Admin Routes
 router.get("/Admin", AdminRole, AdminView);
 router.get("/AdminGetById/:id", AdminRole, AdminGetById);
 router.post("/AdminUpdateProduct", AdminRole, UpdateProduct);
