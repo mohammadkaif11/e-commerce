@@ -1,7 +1,7 @@
 const Mailjet = require('node-mailjet');
 const mailjet = Mailjet.apiConnect(
     "1f6af4c21948d6b3983096f764365223",
-    "a53ec6c3ca45e7897b438f21067a3e4b"
+    "7c7706bf24fbf949951af9336ada75cd"
 );
 
 //here we can used genrate token insted of userId;
@@ -28,9 +28,11 @@ const SendEmail=(userId,email,callback)=>{
   })
   request
     .then(result => {
+      console.log("verify email is send success ",result);
      callback(null,result.body);
     })
     .catch(err => {
+      console.log("verify email is send failed ",err);
       callback(err,null);
     })
 }
