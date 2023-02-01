@@ -6,7 +6,7 @@ const mailjet = Mailjet.apiConnect(
 );
 //here we can ussd genrate token insted of userId;
 
-const ResetPassword=(email,callback)=>{
+const ResetPassword=(email,userId,callback)=>{
   const request = mailjet.post('send', { version: 'v3.1' }).request({
     Messages: [
       {
@@ -23,7 +23,7 @@ const ResetPassword=(email,callback)=>{
         Subject: 'Forget Password',
         TextPart: 'Greetings from Flip!',
         HTMLPart:
-          `<h3>click here for <a href="http://localhost:8080/user/ForgetPassword/${email}">Change your Password</a>!</h3><br />`,
+          `<h3>click here for <a href="http://localhost:8080/user/ForgetPassword/${userId}">Change your Password</a>!</h3><br />`,
       },
     ],
   })

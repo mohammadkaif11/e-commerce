@@ -28,7 +28,6 @@ const SendEmail=(userId,email,callback)=>{
   })
   request
     .then(result => {
-      console.log("verify email is send success ",result);
      callback(null,result.body);
     })
     .catch(err => {

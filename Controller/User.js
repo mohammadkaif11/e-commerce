@@ -18,8 +18,8 @@ router.get("/email", EmailPageView);
 router.get("/VerifyEmail/:id", verfiyEmail);
 router.get("/ForgetPasswordEmail", ForgetPasswordEmailView);
 router.post("/ForgetPasswordEmail", ForgetPasswordEmail);
-router.get("/ForgetPassword/:email", ForgetPasswordView);
-router.post("/ForgetPassword/:email", ForgetPassword);
+router.get("/ForgetPassword/:userId", ForgetPasswordView);
+router.post("/ForgetPassword/:userId", ForgetPassword);
 
 //ForgetPassoword Email View without LoginUser
 function ForgetPasswordEmailView(req, res) {
@@ -34,10 +34,10 @@ function ForgetPasswordEmail(req, res) {
       .CheckUserbyEmail(email)
       .then((data) => {
         if (data) {
-          ResetPassword(data[0].Email, function (err, data) {
+          ResetPassword(data[0].Email,data[0].userId, function (err, data) {
             if (err) {
               res.render("Login/ForgetPasswordEmail.ejs", {
-                message: "Email service try after sometime",
+                message: "Email service down try after sometimes",
                 isValidation:true
               });
             } else {
@@ -66,34 +66,40 @@ function ForgetPasswordEmail(req, res) {
 
 //ForgetPassword View by link using unique email
 function ForgetPasswordView(req, res) {
-  let email = req.params.email;
-  res.render("Login/ForgetPassword.ejs", { message: "", email: email,isValidation:true});
+  const userId = req.params.userId;
+  const {GetUserByuserId}=userService;
+  GetUserByuserId(userId).then((data)=>{
+    res.render("Login/ForgetPassword.ejs", { message: "", email: data.Email,isValidation:true});
+  })
 }
 
 //ForgetPassword post method by link using unique email
 function ForgetPassword(req, res) {
   try {
-    let email = req.params.email;
-    if (req.body.Password != req.body.ConfirmPassword) {
-      res.render("Login/ForgetPassword.ejs", {
-        message: "Please Enter same Password",
-        email: email,
-        isValidation:true
-      });
-    } else {
-      userService
-        .UpdatePasswordbyEmail(email, req.body.Password)
-        .then((data) => {
-          res.render("Login/ForgetPassword.ejs", {
-            message: "Password is change",
-            email: email,
-            isValidation:false,
-          });
-        })
-        .catch((error) => {
-          res.render("Login/ForgetPassword.ejs", { message: "", email: email,isValidation:true });
+    let userId = req.params.userId;
+    const {GetUserByuserId}=userService;
+    GetUserByuserId(userId).then((user)=>{
+      if (req.body.Password != req.body.ConfirmPassword) {
+        res.render("Login/ForgetPassword.ejs", {
+          message: "Please Enter same Password",
+          email: user.Email,
+          isValidation:true
         });
-    }
+      } else {
+        userService
+          .UpdatePasswordbyEmail(user._id, req.body.Password)
+          .then((data) => {
+            res.render("Login/ForgetPassword.ejs", {
+              message: "Password is change",
+              email: user.Email,
+              isValidation:false,
+            });
+          })
+          .catch((error) => {
+            res.render("Login/ForgetPassword.ejs", { message: "", email: email,isValidation:true });
+          });
+      }
+    })
   } catch (error) {
     console.log(error)
     res.render("Error/error.ejs");
@@ -109,9 +115,9 @@ function EmailPageView(req, res, next) {
 function verfiyEmail(req, res, next) {
   try {
     //unique userId
-    let id = req.params.id;
+    let userId = req.params.id;
     userService
-      .VerfiyUser(id)
+      .VerfiyUser(userId)
       .then((data) => {
         res.render("Login/Login.ejs", {
           message: "Success user is verify",
@@ -237,7 +243,7 @@ function signUp(req, res, next) {
           .Register(req.body)
           .then((response) => {
             if (response != null) {
-              SendEmail(response._id, response.Email, function (err, data) {
+              SendEmail(response.userId, response.Email, function (err, data) {
                 if (err) {
                   res.render("Signup/Signup.ejs", {
                     message: "Email service have some error",
