@@ -302,7 +302,7 @@ function login(req, res, next) {
             }
           } else {
             res.render("Login/Login.ejs", {
-              message: "Check email and password is correct or not",
+              message: "Crendials are invalid",
               isValidation:true
             });
           }
