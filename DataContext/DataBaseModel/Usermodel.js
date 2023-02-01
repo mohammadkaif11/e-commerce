@@ -1,6 +1,9 @@
 const mongoose=require('mongoose')
 
 const sechma = new mongoose.Schema({
+    userId:{
+        type:String,
+    },
     Name: {
         type: String,
     },
