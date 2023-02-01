@@ -51,24 +51,30 @@ async function ForgetName(data,userId){
  return data;
 }
 
-async function VerfiyUser(userId){
-  var data= await Users.findByIdAndUpdate(userId,{IsVerify:true});
+async function VerfiyUser(id){
+  var data= await Users.findOne({userId:id},{IsVerify:true});
   return data;
 }
 
 async function CheckUserbyEmail(email){
   const user=await Users.find({Email:email});
-   return user;
+  return user;
 }
 
-async function UpdatePasswordbyEmail(email,password){
+async function UpdatePasswordbyEmail(_id,password){
   const {HashPasswords}=PasswordServices;
   const HashPassword=await HashPasswords(password);
   
-  const user=await Users.find({Email:email});
+  const user=await Users.findById(_id);
   var data= await Users.findByIdAndUpdate(user[0]._id,{Password:HashPassword});
   return data;
 }
+
+async function GetUserByuserId(userId){
+  const user=await Users.findOne({userId:userId});
+  return user;
+}
+
 
 module.exports={
   Register,
@@ -77,5 +83,6 @@ module.exports={
   ForgetName,
   VerfiyUser,
   CheckUserbyEmail,
-  UpdatePasswordbyEmail
+  UpdatePasswordbyEmail,
+  GetUserByuserId
 }
