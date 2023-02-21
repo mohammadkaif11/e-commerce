@@ -21,6 +21,78 @@ router.post("/ForgetPasswordEmail", ForgetPasswordEmail);
 router.get("/ForgetPassword/:userId", ForgetPasswordView);
 router.post("/ForgetPassword/:userId", ForgetPassword);
 
+
+//Admin Login and sigup
+router.get("/adminsignup", AdminSignUpView);
+router.post("/adminsignup", AdminSignUp);
+router.get("/adminlogin", AdminLoginView);
+router.post("/adminlogin",login);
+
+
+function AdminSignUpView(req,res){
+  res.render("Admin/Signup.ejs", { message: "",isValidation:true});
+}
+
+function AdminSignUp(req,res){
+  try {
+    if (
+      req.body.Name == "" ||
+      req.body.Email == "" ||
+      req.body.Password == ""
+    ) {
+      res.render("Signup/Signup.ejs", {
+        message: "Name,email and password are required property",
+        isValidation:true
+      });
+    } else {
+      if (
+        !req.body.Password.length >= 8 ||
+        !IsValidPassword(req.body.Password)
+      ) {
+        let msg = PasswordValidationMsg();
+        res.render("Signup/Signup.ejs", { message: msg ,isValidation:true});
+      } else {
+        userService
+          .RegisterAdmin(req.body)
+          .then((response) => {
+            if (response != null) {
+              SendEmail(response.userId, response.Email, function (err, data) {
+                if (err) {
+                  res.render("Signup/Signup.ejs", {
+                    message: "Email service have some error",
+                    isValidation:true
+                  });
+                } else {
+                  res.redirect(`/user/email/`);
+                }
+              });
+            } else {
+              res.render("Signup/Signup.ejs", {
+                message: "User exits with same email",
+                isValidation:true
+              });
+            }
+          })
+          .catch((error) => {
+            res.render("Signup/Signup.ejs", {
+              message: "Server error please check",
+              isValidation:true
+            });
+          });
+      }
+    }
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
+
+function AdminLoginView(req,res){
+  res.render("Admin/Login.ejs", { message: "",isValidation:true});
+}
+
+////////////////////
+
 //ForgetPassoword Email View without LoginUser
 function ForgetPasswordEmailView(req, res) {
   res.render("Login/ForgetPasswordEmail.ejs", { message: "",isValidation:true });
@@ -64,42 +136,44 @@ function ForgetPasswordEmail(req, res) {
   }
 }
 
+
 //ForgetPassword View by link using unique email
 function ForgetPasswordView(req, res) {
   const userId = req.params.userId;
   const {GetUserByuserId}=userService;
   GetUserByuserId(userId).then((data)=>{
-    res.render("Login/ForgetPassword.ejs", { message: "", email: data.Email,isValidation:true});
+    res.render("Login/ForgetPassword.ejs", { message: "", Id:data.userId,isValidation:true});
+  }).catch((error)=>{
+    res.render("Login/ForgetPassword.ejs", { message: "Some error", Id:"randomId",isValidation:true});
   })
 }
 
 //ForgetPassword post method by link using unique email
 function ForgetPassword(req, res) {
   try {
-    let userId = req.params.userId;
-    const {GetUserByuserId}=userService;
-    GetUserByuserId(userId).then((user)=>{
-      if (req.body.Password != req.body.ConfirmPassword) {
-        res.render("Login/ForgetPassword.ejs", {
-          message: "Please Enter same Password",
-          email: user.Email,
-          isValidation:true
+    const userId = req.params.userId;
+      if(req.body.Password != req.body.ConfirmPassword){
+      res.render("Login/ForgetPassword.ejs", { message: "Please enter same password", Id:userId,isValidation:true});
+      } else if(!req.body.Password.length >= 8 ||
+      !IsValidPassword(req.body.Password)){
+        let msg = PasswordValidationMsg();
+        res.render("Login/ForgetPassword.ejs", { message: msg, Id:userId,isValidation:true});
+      }else{
+      const {UpdatePasswordbyEmail} =userService;
+       UpdatePasswordbyEmail(userId,req.body.Password).then((data)=>{
+        res.render("Login/Login.ejs", {
+          message: "Success user password is change",
+          isValidation:false
         });
-      } else {
-        userService
-          .UpdatePasswordbyEmail(user._id, req.body.Password)
-          .then((data) => {
-            res.render("Login/ForgetPassword.ejs", {
-              message: "Password is change",
-              email: user.Email,
-              isValidation:false,
-            });
-          })
-          .catch((error) => {
-            res.render("Login/ForgetPassword.ejs", { message: "", email: email,isValidation:true });
-          });
+        
+       }).catch((error)=>{
+        res.render("Login/Login.ejs", {
+          message: "Try again later",
+          isValidation:false
+        });
+        
+       })
       }
-    })
   } catch (error) {
     console.log(error)
     res.render("Error/error.ejs");
@@ -108,7 +182,7 @@ function ForgetPassword(req, res) {
 
 //VerfiyEmailView after singup
 function EmailPageView(req, res, next) {
-  res.render("EmailView/EmailPage.ejs", { message: "please verify your mail we have sended" });
+  res.render("EmailView/EmailPage.ejs", { message: "please verify your mail we have sended link" });
 }
 
 //VerfiyEmail Function after singup
@@ -153,12 +227,24 @@ function ChangePassword(req, res) {
         message: "Password and confirm Password is not  same",
         username: req.session.userName,
       });
-    } else {
+    } else if(!req.body.Password.length >= 8 ||
+      !IsValidPassword(req.body.Password)){
+        let msg = PasswordValidationMsg();
+        res.render("Profile/ChangePassword.ejs", {
+          message: msg,
+          username: req.session.userName,
+        });
+       }
+    else {
       let userId = req.session.userId;
       userService
         .ForgetPassword(req.body, userId)
         .then((data) => {
-          res.redirect("/");
+          req.session=null;
+          res.render("Login/Login.ejs", {
+            message: "Password change successfully",
+            isValidation:false
+          });
         })
         .catch((error) => {
           res.render("Profile/ChangePassword.ejs", {
@@ -174,7 +260,7 @@ function ChangePassword(req, res) {
 }
 
 //ChangeNameView with login User
-function ChangeNameView(req, res, next) {
+function ChangeNameView(req, res) {
   res.render("Profile/ChangeName.ejs", {
     message: "",
     username: req.session.userName,
@@ -182,14 +268,15 @@ function ChangeNameView(req, res, next) {
 }
 
 //ChangeNameView post with login User
-function ChangeName(req, res, next) {
+function ChangeName(req, res) {
   try {
-    if (req.body.Name == "" || req.body.ChangeName == "") {
+    console.log(req.body);
+    if (req.body.Name == "" || req.body.ConfirmName == "") {
       res.render("Profile/ChangeName.ejs", {
         message: "Name and changeName is required filed",
         username: req.session.userName,
       });
-    } else if (req.body.Name != req.body.ChangeName) {
+    } else if (req.body.Name != req.body.ConfirmName) {
       res.render("Profile/ChangeName.ejs", {
         message: "Name and changeName is not same",
         username: req.session.userName,
@@ -199,9 +286,14 @@ function ChangeName(req, res, next) {
       userService
         .ForgetName(req.body, userId)
         .then((data) => {
-          res.redirect("/");
+          req.session=null;
+          res.render("Login/Login.ejs", {
+            message: "Name change successfully",
+            isValidation:false
+          });
         })
         .catch((error) => {
+          console.log(error);
           res.render("Profile/ChangeName.ejs", {
             message: "Server error try after sometimes",
             username: req.session.userName,
@@ -292,7 +384,7 @@ function login(req, res, next) {
         .Login(req.body)
         .then((response) => {
           if (response != null) {
-            req.session.userId = response._id;
+            req.session.userId = response.userId;
             req.session.userName = response.Name;
             if (response.IsVerify) {
               req.session.isVerify = true;
