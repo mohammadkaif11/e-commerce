@@ -1,8 +1,7 @@
 const uniqid = require("uniqid")
 
 const GetUniqueId=(name)=>{
-    var Id=uniqid(name+'-');
-    console.log(Id)
+    var Id=uniqid();
     return Id;
 }
 

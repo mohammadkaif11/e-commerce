@@ -10,8 +10,13 @@
     <%- include("../partials/header.ejs",{isAuth:true}); %>
     <div class="row">
       <% if (message.length > 0) { %>
-        <div class="alert alert-danger"><%= message %></div>
-      <% } %>
+         <div class=" alert alert-danger alert-dismissible fade show" role="alert">
+           <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+             <span aria-hidden="true">&times;</span>
+           </button>
+           <%= message %>
+         </div>
+     <% } %>
       <div class="container1">
        <img src="https://www.shift4shop.com/2015/images/build-an-online-store/build-an-online-store.png" alt="data">
       </div>
@@ -19,11 +24,11 @@
           <form method="post" action="/user/ChangeName">
               <h3>Enter new Name</h3>
               <div class="mb-3">
-                <label for="Email" class="form-label">Name</label>
+                <label for="Name" class="form-label">Name</label>
                 <input type="text" name="Name" class="form-control" id="Name" aria-describedby="Name">
               </div>
               <div class="mb-3">
-                <label for="Password" class="form-label">Re-Enter Name</label>
+                <label for="CofirmName" class="form-label">Re-Enter Name</label>
                 <input type="text" name="ConfirmName" class="form-control" id="ConfirmName" aria-describedby="ConfirmName">
               </div>
               <button type="submit" class="btn btn-primary">Change</button>

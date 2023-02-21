@@ -7,6 +7,7 @@ const mailjet = Mailjet.apiConnect(
 //here we can ussd genrate token insted of userId;
 
 const ResetPassword=(email,userId,callback)=>{
+  console.log("userId is "+userId)
   const request = mailjet.post('send', { version: 'v3.1' }).request({
     Messages: [
       {

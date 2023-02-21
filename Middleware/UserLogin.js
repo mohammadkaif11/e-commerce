@@ -4,7 +4,7 @@ const CheckUserLogin = (req, res, next) => {
         next();
       }
       else{
-        res.render("EmailView/EmailPage.ejs",{message:`<a href=user/VerifyEmail/${req.session.userId}>Click the below linkt to verify </a>`});
+        res.render("EmailView/EmailPage.ejs", { message: "please verify your mail before logine we have already sended link" });
       }
   } else {
     res.redirect("/user/login");
