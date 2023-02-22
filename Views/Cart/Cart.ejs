@@ -10,8 +10,10 @@
      <%- include("../partials/header.ejs",{isAuth:true}); %>
       <div class="container mx-2 my-2">
         <div class="orderContainer">
-          <button class="btn btn-primary">Placed Order</button>
+          <a class="btn btn-primary" href="/placedOrder" >Placed Order</a>
+          <hr>
        </div>
+
       </div>
       <div class="container">
         <% if (message.length > 0) { %>

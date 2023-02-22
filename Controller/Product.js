@@ -11,6 +11,8 @@ router.post("/AddProduct", upload.single("product-image"), AddProduct);
 router.get("/CheckCart", CheckUserLogin, OpenCart);
 router.get("/addCart/:id", CheckUserLogin, AddCart);
 router.get("/GetById/:id", CheckUserLogin, GetById);
+router.get("/placedOrder", CheckUserLogin, PlacedOrder);
+
 //Admin Routes
 router.get("/Admin", AdminRole, AdminView);
 router.get("/AdminGetById/:id", AdminRole, AdminGetById);
@@ -218,7 +220,7 @@ function OpenCart(req, res) {
     if (userId == "" || userId == null) {
       res.render("Cart/Cart.ejs", {
         Cart: [],
-        message: "please logout after login",
+        message: "please try after sometimes",
         username: req.session.userName,
       });
     } else {
@@ -281,6 +283,32 @@ function RemoveCart(req, res) {
         res.render("Cart/Cart.ejs", {
           Cart: [],
           message: "some error try again",
+        });
+      });
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
+
+function PlacedOrder(req, res) {
+  try {
+    const userId = req.session.userId;
+    productService
+      .PlacedOrder(userId)
+      .then((data) => {
+        res.render("Cart/Cart.ejs", {
+          Cart: [],
+          message: "Thanks for shopping with me!",
+          username: req.session.userName,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.render("Cart/Cart.ejs", {
+          Cart: [],
+          message: "please try after sometimes",
+          username: req.session.userName,
         });
       });
   } catch (error) {
