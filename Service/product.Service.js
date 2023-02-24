@@ -116,6 +116,27 @@ async function PlacedOrder(userId) {
   return UpdateData;
 }
 
+//GetPagination Object
+ function GetProductByPagination(page,callback) {
+ var perPage = 5;
+         Products.find({})
+    .skip(perPage * page - perPage)
+    .limit(perPage)
+    .exec(function (err, products) {
+      if (err)  callback(null);
+      Products.count().exec(function (err, count) {
+        if (err) callback(null);
+        const obj={
+          products: products,
+          current: page,
+          pages: Math.ceil(count / perPage),
+        }
+       callback(obj)
+      });
+    });
+
+}
+
 module.exports = {
   AddProduct,
   GetAllProduct,
@@ -127,4 +148,5 @@ module.exports = {
   DeleteProduct,
   RemoveCart,
   PlacedOrder,
+  GetProductByPagination,
 };

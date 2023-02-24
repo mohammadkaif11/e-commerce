@@ -9,17 +9,17 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({extended:true}))
 app.use(express.json());
 
+//CookieSession for store user session at browzer
 app.use(cookieSession({
     name: 'session',
     keys: ['key1', 'key2'],
-    maxAge: oneDay// 24 hours
+    maxAge: oneDay
   }))
 
 
 
 app.use('/',require('./Controller/Product.js'))
 app.use('/user', require('./Controller/User'));
-
 
 
 app.listen(process.env.PORT || 8080, function () {

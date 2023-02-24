@@ -7,7 +7,7 @@ const CheckUserLogin = (req, res, next) => {
         res.render("EmailView/EmailPage.ejs", { message: "please verify your mail before logine we have already sended link" });
       }
   } else {
-    res.redirect("/user/login");
+    res.render("EmailView/EmailPage.ejs", { message: "please Login before home page" });
   }
 };
 

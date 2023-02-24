@@ -7,6 +7,7 @@ const productService = require("../Service/product.Service");
 const AdminRole = require("../Middleware/AdminRole");
 
 router.get("/", CheckUserLogin, productView);
+router.get("/Product/:page", CheckUserLogin, AdminViewGetProduct);
 router.post("/AddProduct", upload.single("product-image"), AddProduct);
 router.get("/CheckCart", CheckUserLogin, OpenCart);
 router.get("/addCart/:id", CheckUserLogin, AddCart);
@@ -19,6 +20,35 @@ router.get("/AdminGetById/:id", AdminRole, AdminGetById);
 router.post("/AdminUpdateProduct", AdminRole, UpdateProduct);
 router.get("/AdmindeleteProduct/:id", AdminRole, DeleteAdmin);
 router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
+
+//Admin User Get all Product
+ async function AdminViewGetProduct(req, res) {
+  try {
+    var page = req.params.page || 1;
+    productService.GetProductByPagination(page,function(data){
+      if(data){
+         res.render("Admin/paginationHomepage.ejs", {
+          products: data.products,
+          pages:data.pages,
+          current:data.current,
+          message: "",
+          username: req.session.userName,
+        });
+      }else{
+        res.render("Admin/paginationHomepage.ejs", {
+          products: [],
+          pages:0,
+          current:0,
+          message: "In valid pageNumber",
+          username: req.session.userName,
+        });
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
 
 //Admin User Get all Product
 function AdminView(req, res) {
@@ -277,7 +307,7 @@ function RemoveCart(req, res) {
     productService
       .RemoveCart(productId, userId)
       .then((data) => {
-        res.redirect("/");
+        res.redirect("/Product/1");
       })
       .catch((error) => {
         res.render("Cart/Cart.ejs", {
@@ -290,6 +320,7 @@ function RemoveCart(req, res) {
     res.render("Error/error.ejs");
   }
 }
+
 
 function PlacedOrder(req, res) {
   try {

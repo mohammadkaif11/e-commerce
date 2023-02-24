@@ -27,6 +27,7 @@ router.post("/adminsignup", AdminSignUp);
 router.get("/adminlogin", AdminLoginView);
 router.post("/adminlogin", login);
 
+
 function AdminSignUpView(req, res) {
   res.render("Admin/Signup.ejs", { message: "", isValidation: true });
 }
@@ -90,7 +91,6 @@ function AdminLoginView(req, res) {
 }
 
 ////////////////////
-
 //ForgetPassoword Email View without LoginUser
 function ForgetPasswordEmailView(req, res) {
   res.render("Login/ForgetPasswordEmail.ejs", {
@@ -416,7 +416,7 @@ function login(req, res, next) {
             }
             if (response.Role == "user") {
               req.session.role = "User";
-              res.redirect("/");
+              res.redirect("/Product/1");
             } else {
               req.session.role = "Admin";
               res.redirect("/Admin");
