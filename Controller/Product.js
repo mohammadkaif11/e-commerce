@@ -22,23 +22,23 @@ router.get("/AdmindeleteProduct/:id", AdminRole, DeleteAdmin);
 router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
 
 //Admin User Get all Product
- async function AdminViewGetProduct(req, res) {
+async function AdminViewGetProduct(req, res) {
   try {
     var page = req.params.page || 1;
-    productService.GetProductByPagination(page,function(data){
-      if(data){
+    productService.GetProductByPagination(page, function (data) {
+      if (data) {
          res.render("Admin/paginationHomepage.ejs", {
-          products: data.products,
-          pages:data.pages,
-          current:data.current,
+          products: data.products || [],
+          pages: data.pages || 0,
+          current: data.current || 0,
           message: "",
           username: req.session.userName,
         });
-      }else{
-        res.render("Admin/paginationHomepage.ejs", {
+      } else {
+         res.render("Admin/paginationHomepage.ejs", {
           products: [],
-          pages:0,
-          current:0,
+          pages: 0,
+          current: 0,
           message: "In valid pageNumber",
           username: req.session.userName,
         });
@@ -320,7 +320,6 @@ function RemoveCart(req, res) {
     res.render("Error/error.ejs");
   }
 }
-
 
 function PlacedOrder(req, res) {
   try {
