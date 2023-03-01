@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const userService = require("../Service/user.Service");
+const userService = require("../Service/SqlUserService");
 const SendEmail = require("../Service/email.Service");
 const ResetPassword = require("../Service/ResetPasswordEmail.Service");
 const CheckUserLogin = require("../Middleware/UserLogin");
+
 
 router.get("/signup", signUpView);
 router.post("/signup", signUp);
@@ -73,6 +74,7 @@ function AdminSignUp(req, res) {
             }
           })
           .catch((error) => {
+            console.log(error);
             res.render("Signup/Signup.ejs", {
               message: "Server error please check",
               isValidation: true,
@@ -90,7 +92,6 @@ function AdminLoginView(req, res) {
   res.render("Admin/Login.ejs", { message: "", isValidation: true });
 }
 
-////////////////////
 //ForgetPassoword Email View without LoginUser
 function ForgetPasswordEmailView(req, res) {
   res.render("Login/ForgetPasswordEmail.ejs", {
@@ -107,7 +108,7 @@ function ForgetPasswordEmail(req, res) {
       .CheckUserbyEmail(email)
       .then((data) => {
         if (data) {
-          ResetPassword(data[0].Email, data[0].userId, function (err, data) {
+          ResetPassword(data.Email, data.UserId, function (err, data) {
             if (err) {
               res.render("Login/ForgetPasswordEmail.ejs", {
                 message: "Email service down try after sometimes",
@@ -127,6 +128,7 @@ function ForgetPasswordEmail(req, res) {
         }
       })
       .catch((error) => {
+        console.log(error)
         res.render("Login/ForgetPasswordEmail.ejs", {
           message: "Some thing Error",
           isValidation: true,
@@ -143,20 +145,30 @@ function ForgetPasswordView(req, res) {
   const { GetUserByuserId } = userService;
   GetUserByuserId(userId)
     .then((data) => {
-      res.render("Login/ForgetPassword.ejs", {
-        message: "",
-        Id: data.userId,
-        isValidation: true,
-      });
+        if(data){
+            res.render("Login/ForgetPassword.ejs", {
+                message: "",
+                Id: data.UserId,
+                isValidation: true,
+              });
+        }else{
+            res.render("Login/ForgetPassword.ejs", {
+                message: "Someting error",
+                Id:"randomId",
+                isValidation: true,
+              });
+        }
     })
     .catch((error) => {
+        console.log(error);
       res.render("Login/ForgetPassword.ejs", {
-        message: "Some error",
+        message: "Someting error",
         Id: "randomId",
         isValidation: true,
       });
     });
 }
+
 
 //ForgetPassword post method by link using unique email
 function ForgetPassword(req, res) {
@@ -182,10 +194,17 @@ function ForgetPassword(req, res) {
       const { UpdatePasswordbyEmail } = userService;
       UpdatePasswordbyEmail(userId, req.body.Password)
         .then((data) => {
-          res.render("Login/Login.ejs", {
-            message: "Success user password is change",
-            isValidation: false,
-          });
+            if(data){
+                res.render("Login/Login.ejs", {
+                    message: "Success user password is change",
+                    isValidation: false,
+                  });
+            }else{
+                res.render("Login/Login.ejs", {
+                    message: "Error password is not change",
+                    isValidation: true,
+                  });
+            }
         })
         .catch((error) => {
           res.render("Login/Login.ejs", {
@@ -270,6 +289,7 @@ function ChangePassword(req, res) {
           });
         })
         .catch((error) => {
+            console.log(error)
           res.render("Profile/ChangePassword.ejs", {
             message: "Server error please try after sometimes",
             username: req.session.userName,
@@ -375,6 +395,7 @@ function signUp(req, res, next) {
             }
           })
           .catch((error) => {
+            console.log(error)
             res.render("Signup/Signup.ejs", {
               message: "Server error please check",
               isValidation: true,
@@ -406,8 +427,8 @@ function login(req, res, next) {
         .Login(req.body)
         .then((response) => {
           if (response != null) {
-            req.session.userId = response._id;
-            req.session.uqId = response.userId;
+            req.session.userId = response.Id;
+            req.session.uqId = response.UserId;
             req.session.userName = response.Name;
             if (response.IsVerify) {
               req.session.isVerify = true;
