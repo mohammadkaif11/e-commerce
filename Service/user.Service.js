@@ -33,7 +33,7 @@ async function Login(data) {
     return null;
   }
   var VerifyHashUser = await HashComparePassword(data.Password, user.Password);
-  if (VerfiyUser == false) {
+  if (VerifyHashUser == false) {
     return null;
   }
   return user;

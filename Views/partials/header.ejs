@@ -32,6 +32,11 @@
             >Contact Us</a
           >
         </li>
+        <% if (role=="admin") { %>
+          <li class="nav-item">
+            hii admin
+          </li>
+          <%}
         <% if (isAuth) { %>
         <li class="nav-item">
           <a

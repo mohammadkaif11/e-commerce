@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
 const CheckUserLogin = require("../Middleware/UserLogin");
-const SqlproductService = require("../Service/SqlProductServices");
+const productService = require("../Service/product.Service");
 const AdminRole = require("../Middleware/AdminRole");
 
 router.get("/", CheckUserLogin, productView);
@@ -21,23 +21,21 @@ router.post("/AdminUpdateProduct", AdminRole, UpdateProduct);
 router.get("/AdmindeleteProduct/:id", AdminRole, DeleteAdmin);
 router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
 
-
 //Admin User Get all Product
 async function AdminViewGetProduct(req, res) {
   try {
     var page = req.params.page || 1;
-    SqlproductService.GetProductByPagination(page, function (data) {
-      console.log(data)
+    productService.GetProductByPagination(page, function (data) {
       if (data) {
-         res.render("Product/paginationHomepage.ejs", {
-          products: data.products,
-          pages: data.pages,
-          current: data.current,
+         res.render("Admin/paginationHomepage.ejs", {
+          products: data.products || [],
+          pages: data.pages || 0,
+          current: data.current || 0,
           message: "",
           username: req.session.userName,
         });
       } else {
-         res.render("Product/paginationHomepage.ejs", {
+         res.render("Admin/paginationHomepage.ejs", {
           products: [],
           pages: 0,
           current: 0,
@@ -55,14 +53,13 @@ async function AdminViewGetProduct(req, res) {
 //Admin User Get all Product
 function AdminView(req, res) {
   try {
-    SqlproductService
+    productService
       .GetAllProduct()
       .then((products) => {
         res.render("Admin/homePage.ejs", {
           products: products,
           message: "",
           username: req.session.userName,
-          role:"admin"
         });
       })
       .catch((error) => {
@@ -70,7 +67,6 @@ function AdminView(req, res) {
           products: products,
           username: req.session.userName,
           message: "Refresh page and try again",
-          role:"admin"
         });
       });
   } catch (error) {
@@ -85,10 +81,9 @@ function AdminGetById(req, res) {
     const id = req.params.id;
     if (id == "" || id == null) {
     } else {
-      SqlproductService
+      productService
         .GetProductByIds(id)
         .then((response) => {
-            console.log(response)
           res.render("Admin/ProductDetails.ejs", {
             products: response,
             message: "",
@@ -110,12 +105,12 @@ function AdminGetById(req, res) {
 //Admin User update product
 function UpdateProduct(req, res) {
   try {
-    SqlproductService.UpdateProduct(req.body)
+    productService
+      .UpdateProduct(req.body)
       .then((response) => {
         res.redirect("/Admin");
       })
       .catch((error) => {
-        console.log(error)
         res.redirect("/Admin");
       });
   } catch (error) {
@@ -127,7 +122,7 @@ function UpdateProduct(req, res) {
 //Admin User delete product
 function DeleteAdmin(req, res) {
   try {
-    SqlproductService
+    productService
       .DeleteProduct(req.params.id)
       .then((response) => {
         res.redirect("/Admin");
@@ -139,7 +134,6 @@ function DeleteAdmin(req, res) {
     res.render("Error/error.ejs");
   }
 }
-
 //Admin User Add Product
 function AddProduct(req, res) {
   try {
@@ -158,7 +152,7 @@ function AddProduct(req, res) {
       });
     } else {
       req.body.url = url;
-      SqlproductService
+      productService
         .AddProduct(req.body)
         .then((data) => {
           res.redirect("/Admin");
@@ -203,7 +197,7 @@ function GetById(req, res) {
         message: "Id is not null",
       });
     } else {
-      SqlproductService
+      productService
         .GetProductByIds(id)
         .then((response) => {
           res.render("Product/ProductDetails.ejs", {
@@ -227,7 +221,7 @@ function GetById(req, res) {
 //Product view
 function productView(req, res) {
   try {
-    SqlproductService
+    productService
       .GetAllProduct()
       .then((products) => {
         res.render("Product/Product.ejs", {
@@ -260,10 +254,9 @@ function OpenCart(req, res) {
         username: req.session.userName,
       });
     } else {
-      SqlproductService
+      productService
         .GetAllCart(userId)
         .then((response) => {
-          console.log(response)
           res.render("Cart/Cart.ejs", {
             Cart: response,
             message: "",
@@ -271,9 +264,8 @@ function OpenCart(req, res) {
           });
         })
         .catch((error) => {
-          console.log(error)
           res.render("Cart/Cart.ejs", {
-            Cart: [],
+            Cart: response,
             message: "Refresh message and try again",
             username: req.session.userName,
           });
@@ -290,7 +282,7 @@ function AddCart(req, res) {
   try {
     let productId = req.params.id;
     let userId = req.session.userId;
-    SqlproductService
+    productService
       .AddtoCart(productId, userId)
       .then((response) => {
         res.redirect("/CheckCart");
@@ -307,12 +299,12 @@ function AddCart(req, res) {
   }
 }
 
-//REMOVE FROM Cart
+//Delete Cart
 function RemoveCart(req, res) {
   try {
     let productId = req.params.id;
     let userId = req.session.userId;
-    SqlproductService
+    productService
       .RemoveCart(productId, userId)
       .then((data) => {
         res.redirect("/Product/1");
@@ -329,11 +321,10 @@ function RemoveCart(req, res) {
   }
 }
 
-//PLACE ORDER
 function PlacedOrder(req, res) {
   try {
     const userId = req.session.userId;
-    SqlproductService
+    productService
       .PlacedOrder(userId)
       .then((data) => {
         res.render("Cart/Cart.ejs", {
