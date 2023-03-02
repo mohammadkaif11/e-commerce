@@ -1,5 +1,6 @@
 create Table Cart(
     Id int primary key identity ,
     ProductId int ,
-	UserId int
+	UserId int,
+    AdminId int
 );

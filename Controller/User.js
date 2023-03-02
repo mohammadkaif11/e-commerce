@@ -169,7 +169,6 @@ function ForgetPasswordView(req, res) {
     });
 }
 
-
 //ForgetPassword post method by link using unique email
 function ForgetPassword(req, res) {
   try {
@@ -219,6 +218,7 @@ function ForgetPassword(req, res) {
   }
 }
 
+
 //VerfiyEmailView after singup
 function EmailPageView(req, res, next) {
   res.render("EmailView/EmailPage.ejs", {
@@ -252,6 +252,7 @@ function ChangePasswordView(req, res, next) {
   res.render("Profile/ChangePassword.ejs", {
     message: "",
     username: req.session.userName,
+    role: req.session.role
   });
 }
 
@@ -262,11 +263,13 @@ function ChangePassword(req, res) {
       res.render("Profile/ChangePassword.ejs", {
         message: "Password and confirm Password is required field",
         username: req.session.userName,
+        role: req.session.role
       });
     } else if (req.body.Password != req.body.ConfirmPassword) {
       res.render("Profile/ChangePassword.ejs", {
         message: "Password and confirm Password is not  same",
         username: req.session.userName,
+        role: req.session.role,
       });
     } else if (
       !req.body.Password.length >= 8 ||
@@ -276,6 +279,7 @@ function ChangePassword(req, res) {
       res.render("Profile/ChangePassword.ejs", {
         message: msg,
         username: req.session.userName,
+        role: req.session.role
       });
     } else {
       let userId = req.session.uqId;
@@ -293,6 +297,7 @@ function ChangePassword(req, res) {
           res.render("Profile/ChangePassword.ejs", {
             message: "Server error please try after sometimes",
             username: req.session.userName,
+            role: req.session.role
           });
         });
     }
@@ -307,6 +312,7 @@ function ChangeNameView(req, res) {
   res.render("Profile/ChangeName.ejs", {
     message: "",
     username: req.session.userName,
+    role: req.session.role,
   });
 }
 
@@ -317,11 +323,13 @@ function ChangeName(req, res) {
       res.render("Profile/ChangeName.ejs", {
         message: "Name and changeName is required filed",
         username: req.session.userName,
+        role: req.session.role,
       });
     } else if (req.body.Name != req.body.ConfirmName) {
       res.render("Profile/ChangeName.ejs", {
         message: "Name and changeName is not same",
         username: req.session.userName,
+        role: req.session.role,
       });
     } else {
       let userId = req.session.uqId;
@@ -339,6 +347,7 @@ function ChangeName(req, res) {
           res.render("Profile/ChangeName.ejs", {
             message: "Server error try after sometimes",
             username: req.session.userName,
+            role: req.session.role
           });
         });
     }

@@ -7,42 +7,52 @@ const SqlproductService = require("../Service/SqlProductServices");
 const AdminRole = require("../Middleware/AdminRole");
 
 router.get("/", CheckUserLogin, productView);
-router.get("/Product/:page", CheckUserLogin, AdminViewGetProduct);
-router.post("/AddProduct", upload.single("product-image"), AddProduct);
+router.get("/Product/:page", CheckUserLogin, PageView);
 router.get("/CheckCart", CheckUserLogin, OpenCart);
 router.get("/addCart/:id", CheckUserLogin, AddCart);
 router.get("/GetById/:id", CheckUserLogin, GetById);
 router.get("/placedOrder", CheckUserLogin, PlacedOrder);
+router.get("/ConfirmPage", CheckUserLogin, ConfirmPage);
+router.post("/ConfirmPage", CheckUserLogin, ConfirmPagePost);
+router.get("/checkOrder", CheckUserLogin, Order);
+router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
+
 
 //Admin Routes
+router.post("/AddProduct", upload.single("product-image"), AddProduct);
 router.get("/Admin", AdminRole, AdminView);
 router.get("/AdminGetById/:id", AdminRole, AdminGetById);
 router.post("/AdminUpdateProduct", AdminRole, UpdateProduct);
 router.get("/AdmindeleteProduct/:id", AdminRole, DeleteAdmin);
-router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
+router.get("/bucket", AdminRole, OpenBucket);
 
 
 //Admin User Get all Product
-async function AdminViewGetProduct(req, res) {
+async function PageView(req, res) {
   try {
     var page = req.params.page || 1;
+    if(req.session.role=="Admin"){
+       res.redirect('/Admin');
+       return;
+    }
     SqlproductService.GetProductByPagination(page, function (data) {
-      console.log(data)
       if (data) {
-         res.render("Product/paginationHomepage.ejs", {
+        res.render("Product/paginationHomepage.ejs", {
           products: data.products,
           pages: data.pages,
           current: data.current,
           message: "",
           username: req.session.userName,
+          role: req.session.role,
         });
       } else {
-         res.render("Product/paginationHomepage.ejs", {
+        res.render("Product/paginationHomepage.ejs", {
           products: [],
           pages: 0,
           current: 0,
           message: "In valid pageNumber",
           username: req.session.userName,
+          role: req.session.role,
         });
       }
     });
@@ -52,17 +62,17 @@ async function AdminViewGetProduct(req, res) {
   }
 }
 
-//Admin User Get all Product
+//Admin User Get all Product..
 function AdminView(req, res) {
   try {
-    SqlproductService
-      .GetAllProduct()
+    const UserId = req.session.userId;
+    SqlproductService.GetAllAdminProduct(UserId)
       .then((products) => {
         res.render("Admin/homePage.ejs", {
           products: products,
           message: "",
           username: req.session.userName,
-          role:"admin"
+          role: req.session.role,
         });
       })
       .catch((error) => {
@@ -70,7 +80,7 @@ function AdminView(req, res) {
           products: products,
           username: req.session.userName,
           message: "Refresh page and try again",
-          role:"admin"
+          role: req.session.role,
         });
       });
   } catch (error) {
@@ -85,19 +95,20 @@ function AdminGetById(req, res) {
     const id = req.params.id;
     if (id == "" || id == null) {
     } else {
-      SqlproductService
-        .GetProductByIds(id)
+      SqlproductService.GetProductByIds(id)
         .then((response) => {
-            console.log(response)
+          console.log(response);
           res.render("Admin/ProductDetails.ejs", {
             products: response,
             message: "",
+            role: req.session.role,
           });
         })
         .catch((error) => {
           res.render("Admin/ProductDetails.ejs", {
             products: response,
             message: "Refresh the page and try again",
+            role: req.session.role,
           });
         });
     }
@@ -110,12 +121,13 @@ function AdminGetById(req, res) {
 //Admin User update product
 function UpdateProduct(req, res) {
   try {
-    SqlproductService.UpdateProduct(req.body)
+    const UserId = req.session.userId;
+    SqlproductService.UpdateProduct(req.body, UserId)
       .then((response) => {
         res.redirect("/Admin");
       })
       .catch((error) => {
-        console.log(error)
+        console.log(error);
         res.redirect("/Admin");
       });
   } catch (error) {
@@ -127,8 +139,8 @@ function UpdateProduct(req, res) {
 //Admin User delete product
 function DeleteAdmin(req, res) {
   try {
-    SqlproductService
-      .DeleteProduct(req.params.id)
+    const UserId = req.session.userId;
+    SqlproductService.DeleteProduct(req.params.id, UserId)
       .then((response) => {
         res.redirect("/Admin");
       })
@@ -158,8 +170,8 @@ function AddProduct(req, res) {
       });
     } else {
       req.body.url = url;
-      SqlproductService
-        .AddProduct(req.body)
+      req.body.UserId = req.session.userId;
+      SqlproductService.AddProduct(req.body)
         .then((data) => {
           res.redirect("/Admin");
         })
@@ -168,9 +180,38 @@ function AddProduct(req, res) {
             products: [],
             username: req.session.userName,
             message: "Refresh page and try again",
+            role: req.session.role,
           });
         });
     }
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
+
+function OpenBucket(req,res){
+  try {
+    const UserId = req.session.userId;
+    SqlproductService.OpenBucketAdmin(UserId)
+    .then((data) => {
+      res.render("Admin/Bucket.ejs", {
+        Orders: data,
+        message: "",
+        username: req.session.userName,
+        role: req.session.role,
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+      res.render("Admin/Bucket.ejs", {
+        Orders: [],
+        message: "Some Error!",
+        username: req.session.userName,
+        role: req.session.role,
+      });
+    });
+
   } catch (error) {
     console.log(error);
     res.render("Error/error.ejs");
@@ -203,18 +244,19 @@ function GetById(req, res) {
         message: "Id is not null",
       });
     } else {
-      SqlproductService
-        .GetProductByIds(id)
+      SqlproductService.GetProductByIds(id)
         .then((response) => {
           res.render("Product/ProductDetails.ejs", {
             products: response,
             message: "",
+            role: req.session.role,
           });
         })
         .catch((error) => {
           res.render("Product/ProductDetails.ejs", {
             products: [],
             message: "Refresh the page and try again",
+            role: req.session.role,
           });
         });
     }
@@ -227,13 +269,13 @@ function GetById(req, res) {
 //Product view
 function productView(req, res) {
   try {
-    SqlproductService
-      .GetAllProduct()
+    SqlproductService.GetAllProduct()
       .then((products) => {
         res.render("Product/Product.ejs", {
           products: products,
           username: req.session.userName,
           message: "",
+          role: req.session.role,
         });
       })
       .catch((error) => {
@@ -241,6 +283,7 @@ function productView(req, res) {
           products: [],
           username: req.session.userName,
           message: "Refresh page and try",
+          role: req.session.role,
         });
       });
   } catch (error) {
@@ -258,24 +301,25 @@ function OpenCart(req, res) {
         Cart: [],
         message: "please try after sometimes",
         username: req.session.userName,
+        role: req.session.role,
       });
     } else {
-      SqlproductService
-        .GetAllCart(userId)
+      SqlproductService.GetAllCart(userId)
         .then((response) => {
-          console.log(response)
           res.render("Cart/Cart.ejs", {
             Cart: response,
-            message: "",
+            message: response.length > 0 ? "" : "Cart is empty",
             username: req.session.userName,
+            role: req.session.role,
           });
         })
         .catch((error) => {
-          console.log(error)
+          console.log(error);
           res.render("Cart/Cart.ejs", {
             Cart: [],
             message: "Refresh message and try again",
             username: req.session.userName,
+            role: req.session.role,
           });
         });
     }
@@ -290,8 +334,11 @@ function AddCart(req, res) {
   try {
     let productId = req.params.id;
     let userId = req.session.userId;
-    SqlproductService
-      .AddtoCart(productId, userId)
+    const AdminId = req.query.adminId;
+    console.log(productId);
+    console.log(userId);
+    console.log(AdminId);
+    SqlproductService.AddtoCart(productId, userId, AdminId)
       .then((response) => {
         res.redirect("/CheckCart");
       })
@@ -312,8 +359,7 @@ function RemoveCart(req, res) {
   try {
     let productId = req.params.id;
     let userId = req.session.userId;
-    SqlproductService
-      .RemoveCart(productId, userId)
+    SqlproductService.RemoveCart(productId, userId)
       .then((data) => {
         res.redirect("/Product/1");
       })
@@ -333,13 +379,13 @@ function RemoveCart(req, res) {
 function PlacedOrder(req, res) {
   try {
     const userId = req.session.userId;
-    SqlproductService
-      .PlacedOrder(userId)
+    SqlproductService.PlacedOrder(userId)
       .then((data) => {
         res.render("Cart/Cart.ejs", {
           Cart: [],
           message: "Thanks for shopping with me!",
           username: req.session.userName,
+          role: req.session.role,
         });
       })
       .catch((error) => {
@@ -348,6 +394,90 @@ function PlacedOrder(req, res) {
           Cart: [],
           message: "please try after sometimes",
           username: req.session.userName,
+          role: req.session.role,
+        });
+      });
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
+
+//Confirm Page
+function ConfirmPage(req, res) {
+  try {
+    let userId = req.session.userId;
+    if (userId == "" || userId == null) {
+      res.render("Cart/ConfirmPage.ejs", {
+        Cart: [],
+        message: "please try after sometimes",
+        username: req.session.userName,
+      });
+    } else {
+      SqlproductService.GetAllCart(userId)
+        .then((response) => {
+          console.log(response);
+          res.render("Cart/ConfirmPage.ejs", {
+            Cart: response,
+            message: "",
+            username: req.session.userName,
+          });
+        })
+        .catch((error) => {
+          res.render("Cart/ConfirmPage.ejs", {
+            Cart: response,
+            message: "Refresh message and try again",
+            username: req.session.userName,
+          });
+        });
+    }
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
+
+//Confirm page Post Request
+function ConfirmPagePost(req, res) {
+  try {
+    let userId = req.session.userId;
+    if (userId == "" || userId == null) {
+      res.render("Cart/ConfirmPage.ejs", {
+        Cart: [],
+        message: "please try after sometimes",
+        username: req.session.userName,
+      });
+    } else {
+      SqlproductService.ConfirmOrder(userId, req.body).then((data) => {
+        res.redirect("/checkOrder");
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
+
+//Show all Orders
+function Order(req, res) {
+  try {
+    const UserId = req.session.userId;
+    SqlproductService.GetOrder(UserId)
+      .then((data) => {
+        res.render("Cart/Order.ejs", {
+          Orders: data,
+          message: "",
+          username: req.session.userName,
+          role: req.session.role,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.render("Cart/Order.ejs", {
+          Orders: [],
+          message: "Some Error!",
+          username: req.session.userName,
+          role: req.session.role,
         });
       });
   } catch (error) {

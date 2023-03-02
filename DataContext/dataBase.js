@@ -1,9 +1,11 @@
+/*
 require('dotenv').config();
 const mongoose = require('mongoose');
 const mongoString = process.env.MONGODB_URI;
 
 mongoose.set('strictQuery', false)
 mongoose.connect(mongoString);
+
 
 
 const database = mongoose.connection;
@@ -18,3 +20,6 @@ const connectToMongo = () => {
 }
 
 module.exports = connectToMongo;
+
+
+*/

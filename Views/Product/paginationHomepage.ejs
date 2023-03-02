@@ -23,7 +23,7 @@
               <h5 class="card-title">Name:<%= element.ProductName %></h5>
               <span style="font-weight: bold;">Price:<%= element.ProductPrice %></span>
               <div class="button">
-                <a href="/addCart/<%= element.Id %>" class="btn btn-primary">Add to Cart</a>
+                <a href="/addCart/<%= element.Id %>?adminId=<%= element.UserId %>" class="btn btn-primary">Add to Cart</a>
                 <a href="/GetById/<%= element.Id %>" class="btn btn-primary">Details</a>
     
               </div>

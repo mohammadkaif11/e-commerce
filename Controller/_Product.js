@@ -134,6 +134,7 @@ function DeleteAdmin(req, res) {
     res.render("Error/error.ejs");
   }
 }
+
 //Admin User Add Product
 function AddProduct(req, res) {
   try {
@@ -346,5 +347,7 @@ function PlacedOrder(req, res) {
     res.render("Error/error.ejs");
   }
 }
+
+
 
 module.exports = router;
