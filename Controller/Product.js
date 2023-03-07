@@ -2,8 +2,6 @@ const dotenv = require('dotenv');
 dotenv.config();
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-// const upload = multer({ dest: "uploads/" });
 const CheckUserLogin = require("../Middleware/UserLogin");
 const SqlproductService = require("../Service/SqlProductServices");
 const AdminRole = require("../Middleware/AdminRole");
@@ -11,6 +9,7 @@ const AdminRole = require("../Middleware/AdminRole");
 //Aws Configuration
 const aws = require( 'aws-sdk' );
 const multerS3 = require( 'multer-s3' );
+const multer = require("multer");
 const path = require( 'path' );
 const ID =process.env.AWS_ID;
 const SECRET = process.env.AWS_SECRET;
@@ -23,6 +22,8 @@ const s3 = new aws.S3({
   Bucket: BUCKET_NAME
  });
 
+ //using Local folders uploads
+ // const upload = multer({ dest: "uploads/" });
  //upload middleware
  const upload = multer({
   storage: multerS3({
