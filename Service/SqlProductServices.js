@@ -2,6 +2,18 @@ const ConenctedToSql = require("../SqlDataContext/Db");
 const sql = require("mssql/msnodesqlv8");
 const querys = require("../SqlDataContext/Querys/productquery");
 
+//Aws Configuration
+const aws = require( 'aws-sdk' );
+const ID =process.env.AWS_ID;
+const SECRET = process.env.AWS_SECRET;
+const BUCKET_NAME = process.env.BACKET_NAME;
+
+//S3 BUCKET
+const s3 = new aws.S3({
+  accessKeyId: ID,
+  secretAccessKey: SECRET,
+  Bucket: BUCKET_NAME
+ });
 
 //addProducts by admin
 async function AddProduct(data) {
@@ -57,6 +69,13 @@ async function UpdateProduct(data, UserId) {
 //delete products by admin
 async function DeleteProduct(id, UserId) {
   const pool = await ConenctedToSql();
+  const productById=await GetProductById(id);  
+  const params = {
+    Bucket: BUCKET_NAME,
+    Key: productById[0].ImageKey
+  }
+  await s3.deleteObject(params).promise()
+  console.log("file deleted Successfully")
   const response = await pool
     .request()
     .input("id", sql.Int, id)
@@ -65,7 +84,7 @@ async function DeleteProduct(id, UserId) {
   return response.rowsAffected[0];
 }
 
-//.......////////./////////////////////.......
+//.......////////./////////////////////...........
 //getallProducts for users
 
 async function GetAllProduct() {
