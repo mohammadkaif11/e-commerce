@@ -1,7 +1,7 @@
 const querys = {
     GETPRODUCTS: "SELECT * FROM [ECM].[dbo].[Products]",
     GETADMINPRODUCTS:"SELECT * FROM [ECM].[dbo].[Products] where UserId=@userid",
-    ADDPRODUCTS:"INSERT INTO [ECM].[dbo].[Products] (UserId,ProductName,ProductPrice,ProductDescription,ImageUrl) VALUES (@userId,@productName,@productPrice,@productDescription,@imageUrl);",
+    ADDPRODUCTS:"INSERT INTO [ECM].[dbo].[Products] (UserId,ProductName,ProductPrice,ProductDescription,ImageUrl,ImageKey) VALUES (@userId,@productName,@productPrice,@productDescription,@imageUrl,@imageKey);",
     GETPRODUCTBYID: "SELECT * FROM [ECM].[dbo].[Products] WHERE Id= @id",
     UPDATEPRODUCT:"UPDATE [ECM].[dbo].[Products] SET  ProductName=@productName , ProductPrice=@productPrice , ProductDescription=@productDescription  WHERE Id = @id and UserId = userId;",
     DELETEPRODUCTS:"DELETE FROM [ECM].[dbo].[Products] WHERE Id=@id and UserId = userId;",

@@ -1,10 +1,39 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const upload = multer({ dest: "uploads/" });
+// const upload = multer({ dest: "uploads/" });
 const CheckUserLogin = require("../Middleware/UserLogin");
 const SqlproductService = require("../Service/SqlProductServices");
 const AdminRole = require("../Middleware/AdminRole");
+
+//Aws Configuration
+const aws = require( 'aws-sdk' );
+const multerS3 = require( 'multer-s3' );
+const path = require( 'path' );
+const ID =process.env.AWS_ID;
+const SECRET = process.env.AWS_SECRET;
+const BUCKET_NAME = process.env.BACKET_NAME;
+
+//S3 BUCKET
+const s3 = new aws.S3({
+  accessKeyId: ID,
+  secretAccessKey: SECRET,
+  Bucket: BUCKET_NAME
+ });
+
+ //upload middleware
+ const upload = multer({
+  storage: multerS3({
+   s3: s3,
+   bucket: 'flipshop',
+   acl: 'public-read',
+   key: function (req, file, cb) {
+    cb(null, path.basename( file.originalname, path.extname( file.originalname ) ) + '-' + Date.now() + path.extname( file.originalname ) )
+   }
+  })
+ });
 
 router.get("/", CheckUserLogin, productView);
 router.get("/Product/:page", CheckUserLogin, PageView);
@@ -152,10 +181,12 @@ function DeleteAdmin(req, res) {
   }
 }
 
-//Admin User Add Product
+
+//Admin Add Products
 function AddProduct(req, res) {
   try {
-    let url = req.file.filename;
+    let url = req.file.location;
+    const key = req.file.key;
     if (
       url == "" ||
       req.body.ProductName == "" ||
@@ -170,6 +201,7 @@ function AddProduct(req, res) {
       });
     } else {
       req.body.url = url;
+      req.body.key=key;
       req.body.UserId = req.session.userId;
       SqlproductService.AddProduct(req.body)
         .then((data) => {
@@ -189,6 +221,7 @@ function AddProduct(req, res) {
     res.render("Error/error.ejs");
   }
 }
+
 
 function OpenBucket(req,res){
   try {

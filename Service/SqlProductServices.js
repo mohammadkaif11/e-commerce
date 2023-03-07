@@ -2,6 +2,7 @@ const ConenctedToSql = require("../SqlDataContext/Db");
 const sql = require("mssql/msnodesqlv8");
 const querys = require("../SqlDataContext/Querys/productquery");
 
+
 //addProducts by admin
 async function AddProduct(data) {
   const pool = await ConenctedToSql();
@@ -12,6 +13,7 @@ async function AddProduct(data) {
     .input("productDescription", sql.VarChar, data.ProductDescription)
     .input("imageUrl", sql.VarChar, data.url)
     .input("userId", sql.Int, data.UserId)
+    .input("imageKey",sql.VarChar,data.key)
     .query(querys.ADDPRODUCTS);
   return response.rowsAffected[0];
 }
