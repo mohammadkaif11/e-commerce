@@ -26,16 +26,17 @@
               <img height="300px" width="200px" src="/<%=element.ImageUrl%>" class="card-img-top" alt="...">
               <div class="card-body">
                 <form method="post" action="/AdminUpdateProduct">
-                    <input name="_id" type="id" value=<%= element._id %>  hidden/>
+                    <input hidden name="_id" type="number" value=<%= element.Id %>   />
+                    <input hidden name="UserId" type="number" value=<%= element.UserId %> />
                     <h5 class="card-title">Name: <input required type="text" name="ProductName" value=<%= element.ProductName %> id="ProductName"></h5>
-                    <h5 style="font-weight: bold;">Price:<input required type="text" name="ProductPrice" value=<%= element.ProductPrice %> id="ProductPrice"></h5>
+                    <h5 style="font-weight: bold;">Price:<input required type="number" name="ProductPrice" value=<%= element.ProductPrice %> id="ProductPrice"></h5>
                     <p><strong>Description:</strong>:<%= element.ProductDescription %></p>
-                    <p><strong>Change Description:</strong><input required type="text" name="ProductDescription"  id="ProductDescription"></p>
+                    <p><strong>Change Description:</strong><input  name="ProductDescription"  id="ProductDescription"  type="text" value=<%= element.ProductDescription %> ></p>
                      <div class="but">
                         <button type="submit" class="btn btn-primary">Update</button>
                         <a href="/Admin" class="btn btn-primary">Back</a>
                      </div>
-               </form>
+               </form> 
               </div>
             </div>
           </div>

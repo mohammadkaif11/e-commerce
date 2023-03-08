@@ -32,13 +32,36 @@
             >Contact Us</a
           >
         </li>
-        <% if (isAuth) { %>
+        <% if (locals.role=="Admin") { %>
         <li class="nav-item">
           <a
-            href="/user/logout"
-            class="btn btn-secondary mx-2"
-            >Logout</a
+            style="color: white"
+            class="nav-link active"
+            aria-current="page"
+            href="/Admin"
+            >Inventory</a
           >
+        </li>
+        <li class="nav-item">
+          <a
+          style="background-color: white; color: #2874f0"
+          class="btn mx-2"
+            aria-current="page"
+            href="/Bucket"
+            >Bucket</a
+          >
+        </li>
+        <%} %> <% if (isAuth) { %>
+        <li class="nav-item">
+          <a
+            href="/checkOrder"
+            class="btn mx-2"
+            style="background-color: white; color: #2874f0"
+            >Check Order</a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="/user/logout" class="btn btn-secondary mx-2">Logout</a>
         </li>
         <%} else { %>
         <li class="nav-item">
@@ -59,21 +82,31 @@
         </li>
         <% } %>
       </ul>
-      <ul class="navbar-nav mb-2 mb-lg-0"> 
+      <ul class="navbar-nav mb-2 mb-lg-0">
         <% if (isAuth) { %>
-          <div class="dropdown show" style="right: 30px;">
-            <% if (locals.username) { %>
-              <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <%=username %>
-              </a>
-            <%} %>
-            <div class="dropdown-menu " aria-labelledby="dropdownMenuLink">
-              <a class="dropdown-item" href="/user/ChangePassword">ChangePassword</a>
-              <a class="dropdown-item" href="/user/ChangeName">ChangeName</a>
-              <a class="dropdown-item" href="/CheckCart">Cart</a>
-              <a class="dropdown-item" href="/">AllProuducts</a>
-            </div>
+        <div class="dropdown show" style="right: 30px">
+          <% if (locals.username) { %>
+          <a
+            class="btn btn-secondary dropdown-toggle"
+            href="#"
+            role="button"
+            id="dropdownMenuLink"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            <%=username %>
+          </a>
+          <%} %>
+          <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+            <a class="dropdown-item" href="/user/ChangePassword"
+              >ChangePassword</a
+            >
+            <a class="dropdown-item" href="/user/ChangeName">ChangeName</a>
+            <a class="dropdown-item" href="/CheckCart">Cart</a>
+            <a class="dropdown-item" href="/">AllProuducts</a>
           </div>
+        </div>
         <%} %>
       </ul>
     </div>

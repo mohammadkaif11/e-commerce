@@ -1,8 +1,10 @@
 const express=require('express');
 const app = express();
 const connectToMongo=require('./DataContext/dataBase')
+
 var cookieSession = require('cookie-session')
-connectToMongo();
+//connectToMongo();
+
 const oneDay = 1000 * 60 * 60 * 24;
 app.use(express.static('uploads'))
 app.set('view engine', 'ejs');
@@ -20,6 +22,7 @@ app.use(cookieSession({
 
 app.use('/',require('./Controller/Product.js'))
 app.use('/user', require('./Controller/User'));
+app.use('/sqlUser', require('./Controller/User'));
 
 
 app.listen(process.env.PORT || 8080, function () {

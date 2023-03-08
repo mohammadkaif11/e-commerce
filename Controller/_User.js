@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const userService = require("../Service/SqlUserService");
+const userService = require("../Service/user.Service");
 const SendEmail = require("../Service/email.Service");
 const ResetPassword = require("../Service/ResetPasswordEmail.Service");
 const CheckUserLogin = require("../Middleware/UserLogin");
@@ -74,7 +74,6 @@ function AdminSignUp(req, res) {
             }
           })
           .catch((error) => {
-            console.log(error);
             res.render("Signup/Signup.ejs", {
               message: "Server error please check",
               isValidation: true,
@@ -92,6 +91,7 @@ function AdminLoginView(req, res) {
   res.render("Admin/Login.ejs", { message: "", isValidation: true });
 }
 
+////////////////////
 //ForgetPassoword Email View without LoginUser
 function ForgetPasswordEmailView(req, res) {
   res.render("Login/ForgetPasswordEmail.ejs", {
@@ -108,7 +108,7 @@ function ForgetPasswordEmail(req, res) {
       .CheckUserbyEmail(email)
       .then((data) => {
         if (data) {
-          ResetPassword(data.Email, data.UserId, function (err, data) {
+          ResetPassword(data[0].Email, data[0].userId, function (err, data) {
             if (err) {
               res.render("Login/ForgetPasswordEmail.ejs", {
                 message: "Email service down try after sometimes",
@@ -128,7 +128,6 @@ function ForgetPasswordEmail(req, res) {
         }
       })
       .catch((error) => {
-        console.log(error)
         res.render("Login/ForgetPasswordEmail.ejs", {
           message: "Some thing Error",
           isValidation: true,
@@ -145,24 +144,15 @@ function ForgetPasswordView(req, res) {
   const { GetUserByuserId } = userService;
   GetUserByuserId(userId)
     .then((data) => {
-        if(data){
-            res.render("Login/ForgetPassword.ejs", {
-                message: "",
-                Id: data.UserId,
-                isValidation: true,
-              });
-        }else{
-            res.render("Login/ForgetPassword.ejs", {
-                message: "Someting error",
-                Id:"randomId",
-                isValidation: true,
-              });
-        }
+      res.render("Login/ForgetPassword.ejs", {
+        message: "",
+        Id: data.userId,
+        isValidation: true,
+      });
     })
     .catch((error) => {
-        console.log(error);
       res.render("Login/ForgetPassword.ejs", {
-        message: "Someting error",
+        message: "Some error",
         Id: "randomId",
         isValidation: true,
       });
@@ -193,17 +183,10 @@ function ForgetPassword(req, res) {
       const { UpdatePasswordbyEmail } = userService;
       UpdatePasswordbyEmail(userId, req.body.Password)
         .then((data) => {
-            if(data){
-                res.render("Login/Login.ejs", {
-                    message: "Success user password is change",
-                    isValidation: false,
-                  });
-            }else{
-                res.render("Login/Login.ejs", {
-                    message: "Error password is not change",
-                    isValidation: true,
-                  });
-            }
+          res.render("Login/Login.ejs", {
+            message: "Success user password is change",
+            isValidation: false,
+          });
         })
         .catch((error) => {
           res.render("Login/Login.ejs", {
@@ -217,7 +200,6 @@ function ForgetPassword(req, res) {
     res.render("Error/error.ejs");
   }
 }
-
 
 //VerfiyEmailView after singup
 function EmailPageView(req, res, next) {
@@ -252,7 +234,6 @@ function ChangePasswordView(req, res, next) {
   res.render("Profile/ChangePassword.ejs", {
     message: "",
     username: req.session.userName,
-    role: req.session.role
   });
 }
 
@@ -263,13 +244,11 @@ function ChangePassword(req, res) {
       res.render("Profile/ChangePassword.ejs", {
         message: "Password and confirm Password is required field",
         username: req.session.userName,
-        role: req.session.role
       });
     } else if (req.body.Password != req.body.ConfirmPassword) {
       res.render("Profile/ChangePassword.ejs", {
         message: "Password and confirm Password is not  same",
         username: req.session.userName,
-        role: req.session.role,
       });
     } else if (
       !req.body.Password.length >= 8 ||
@@ -279,7 +258,6 @@ function ChangePassword(req, res) {
       res.render("Profile/ChangePassword.ejs", {
         message: msg,
         username: req.session.userName,
-        role: req.session.role
       });
     } else {
       let userId = req.session.uqId;
@@ -293,11 +271,9 @@ function ChangePassword(req, res) {
           });
         })
         .catch((error) => {
-            console.log(error)
           res.render("Profile/ChangePassword.ejs", {
             message: "Server error please try after sometimes",
             username: req.session.userName,
-            role: req.session.role
           });
         });
     }
@@ -312,7 +288,6 @@ function ChangeNameView(req, res) {
   res.render("Profile/ChangeName.ejs", {
     message: "",
     username: req.session.userName,
-    role: req.session.role,
   });
 }
 
@@ -323,13 +298,11 @@ function ChangeName(req, res) {
       res.render("Profile/ChangeName.ejs", {
         message: "Name and changeName is required filed",
         username: req.session.userName,
-        role: req.session.role,
       });
     } else if (req.body.Name != req.body.ConfirmName) {
       res.render("Profile/ChangeName.ejs", {
         message: "Name and changeName is not same",
         username: req.session.userName,
-        role: req.session.role,
       });
     } else {
       let userId = req.session.uqId;
@@ -347,7 +320,6 @@ function ChangeName(req, res) {
           res.render("Profile/ChangeName.ejs", {
             message: "Server error try after sometimes",
             username: req.session.userName,
-            role: req.session.role
           });
         });
     }
@@ -386,6 +358,7 @@ function signUp(req, res, next) {
           .Register(req.body)
           .then((response) => {
             if (response != null) {
+              console.log(response);
               SendEmail(response.userId, response.Email, function (err, data) {
                 if (err) {
                   res.render("Signup/Signup.ejs", {
@@ -404,7 +377,6 @@ function signUp(req, res, next) {
             }
           })
           .catch((error) => {
-            console.log(error)
             res.render("Signup/Signup.ejs", {
               message: "Server error please check",
               isValidation: true,
@@ -436,8 +408,8 @@ function login(req, res, next) {
         .Login(req.body)
         .then((response) => {
           if (response != null) {
-            req.session.userId = response.Id;
-            req.session.uqId = response.UserId;
+            req.session.userId = response._id;
+            req.session.uqId = response.userId;
             req.session.userName = response.Name;
             if (response.IsVerify) {
               req.session.isVerify = true;
