@@ -1,4 +1,4 @@
-const dotenv = require('dotenv');
+const dotenv = require("dotenv");
 dotenv.config();
 const express = require("express");
 const router = express.Router();
@@ -7,11 +7,12 @@ const SqlproductService = require("../Service/SqlProductServices");
 const AdminRole = require("../Middleware/AdminRole");
 
 //Aws Configuration
-const aws = require( 'aws-sdk' );
-const multerS3 = require( 'multer-s3' );
+const aws = require("aws-sdk");
+const multerS3 = require("multer-s3");
 const multer = require("multer");
-const path = require( 'path' );
-const ID =process.env.AWS_ID;
+const path = require("path");
+const { error } = require("console");
+const ID = process.env.AWS_ID;
 const SECRET = process.env.AWS_SECRET;
 const BUCKET_NAME = process.env.BACKET_NAME;
 
@@ -19,22 +20,29 @@ const BUCKET_NAME = process.env.BACKET_NAME;
 const s3 = new aws.S3({
   accessKeyId: ID,
   secretAccessKey: SECRET,
-  Bucket: BUCKET_NAME
- });
+  Bucket: BUCKET_NAME,
+});
 
- //using Local folders uploads
- // const upload = multer({ dest: "uploads/" });
- //upload middleware
- const upload = multer({
+//using Local folders uploads
+// const upload = multer({ dest: "uploads/" });
+//upload middleware
+
+const upload = multer({
   storage: multerS3({
-   s3: s3,
-   bucket: 'flipshop',
-   acl: 'public-read',
-   key: function (req, file, cb) {
-    cb(null, path.basename( file.originalname, path.extname( file.originalname ) ) + '-' + Date.now() + path.extname( file.originalname ) )
-   }
-  })
- });
+    s3: s3,
+    bucket: "flipshop",
+    acl: "public-read",
+    key: function (req, file, cb) {
+      cb(
+        null,
+        path.basename(file.originalname, path.extname(file.originalname)) +
+          "-" +
+          Date.now() +
+          path.extname(file.originalname)
+      );
+    },
+  }),
+});
 
 router.get("/", CheckUserLogin, productView);
 router.get("/Product/:page", CheckUserLogin, PageView);
@@ -44,28 +52,31 @@ router.get("/GetById/:id", CheckUserLogin, GetById);
 router.get("/placedOrder", CheckUserLogin, PlacedOrder);
 router.get("/ConfirmPage", CheckUserLogin, ConfirmPage);
 router.post("/ConfirmPage", CheckUserLogin, ConfirmPagePost);
-router.get("/checkOrder", CheckUserLogin, Order);
+router.get("/checkOrder/:page", CheckUserLogin, Order);
 router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
 
-
 //Admin Routes
-router.post("/AddProduct", upload.single("product-image"), AddProduct);
+router.post("/AddProduct",AdminRole, upload.single("product-image"), AddProduct);
 router.get("/Admin", AdminRole, AdminView);
 router.get("/AdminGetById/:id", AdminRole, AdminGetById);
 router.post("/AdminUpdateProduct", AdminRole, UpdateProduct);
 router.get("/AdmindeleteProduct/:id", AdminRole, DeleteAdmin);
-router.get("/bucket", AdminRole, OpenBucket);
-
+router.get("/bucket/:page", AdminRole, OpenBucket);
+router.get("/updateOrder/:orderId",AdminRole, GetOrderbyId);
+router.post("/updateOrder/:orderId",AdminRole, UpdateOrderStatus);
 
 //Admin User Get all Product
+
 async function PageView(req, res) {
   try {
     var page = req.params.page || 1;
-    if(req.session.role=="Admin"){
-       res.redirect('/Admin');
-       return;
+    var productName=req.query.productName || "";
+    var priceRange=req.query.priceRange || "";
+       if (req.session.role == "Admin") {
+      res.redirect("/Admin");
+      return;
     }
-    SqlproductService.GetProductByPagination(page, function (data) {
+    SqlproductService.GetProductByPagination(page,productName,priceRange, function (data) {
       if (data) {
         res.render("Product/paginationHomepage.ejs", {
           products: data.products,
@@ -74,15 +85,19 @@ async function PageView(req, res) {
           message: "",
           username: req.session.userName,
           role: req.session.role,
+          productName:productName,
+          priceRange:priceRange || 0
         });
       } else {
         res.render("Product/paginationHomepage.ejs", {
           products: [],
-          pages: 0,
-          current: 0,
+          pages: 1,
+          current: 1,
           message: "In valid pageNumber",
           username: req.session.userName,
           role: req.session.role,
+          roductName:"",
+          priceRange:0
         });
       }
     });
@@ -182,7 +197,6 @@ function DeleteAdmin(req, res) {
   }
 }
 
-
 //Admin Add Products
 function AddProduct(req, res) {
   try {
@@ -202,7 +216,7 @@ function AddProduct(req, res) {
       });
     } else {
       req.body.url = url;
-      req.body.key=key;
+      req.body.key = key;
       req.body.UserId = req.session.userId;
       SqlproductService.AddProduct(req.body)
         .then((data) => {
@@ -223,29 +237,88 @@ function AddProduct(req, res) {
   }
 }
 
-
-function OpenBucket(req,res){
+//Open Bucket with pagination
+function OpenBucket(req, res) {
   try {
+    let page = req.params.page;
     const UserId = req.session.userId;
-    SqlproductService.OpenBucketAdmin(UserId)
-    .then((data) => {
-      res.render("Admin/Bucket.ejs", {
-        Orders: data,
-        message: "",
-        username: req.session.userName,
-        role: req.session.role,
+    SqlproductService.OpenBucketAdmin(UserId, page)
+      .then((data) => {
+        console.log(data);
+        res.render("Admin/Bucket.ejs", {
+          Orders: data.data,
+          message: "",
+          username: req.session.userName,
+          role: req.session.role,
+          pages: data.pages,
+          current: data.current,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.render("Admin/Bucket.ejs", {
+          Orders: [],
+          message: "Some Error!",
+          username: req.session.userName,
+          role: req.session.role,
+          pages: 1,
+          current: 1,
+        });
       });
-    })
-    .catch((error) => {
-      console.log(error);
-      res.render("Admin/Bucket.ejs", {
-        Orders: [],
-        message: "Some Error!",
-        username: req.session.userName,
-        role: req.session.role,
-      });
-    });
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
 
+//Get order By id for update
+function GetOrderbyId(req, res) {
+  try {
+    let orderId = req.params.orderId;
+    const UserId = req.session.userId;
+    SqlproductService.GetBucketOrderById(orderId, UserId)
+      .then((data) => {
+        res.render("Admin/UpdateOrder.ejs", {
+          Orders: data,
+          message: "",
+          username: req.session.userName,
+          role: req.session.role,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.render("Admin/UpdateOrder.ejs", {
+          Orders: [],
+          message: "",
+          username: req.session.userName,
+          role: req.session.role,
+        });
+      });
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
+
+//Update the order  status with date and transaction
+
+function UpdateOrderStatus(req, res) {
+  try {
+    let orderId = req.params.orderId;
+    const UserId = req.session.userId;
+    console.log(orderId);
+    console.log(req.body);
+
+    SqlproductService.UpdateOrders(orderId, UserId, req.body)
+      .then((data) => {
+        SqlproductService.GetBucketOrderById(orderId, UserId).then((data) => {
+          res.redirect('/bucket/1');
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.redirect('/bucket/1');
+      });
   } catch (error) {
     console.log(error);
     res.render("Error/error.ejs");
@@ -483,7 +556,7 @@ function ConfirmPagePost(req, res) {
       });
     } else {
       SqlproductService.ConfirmOrder(userId, req.body).then((data) => {
-        res.redirect("/checkOrder");
+        res.redirect("/checkOrder/1");
       });
     }
   } catch (error) {
@@ -495,14 +568,18 @@ function ConfirmPagePost(req, res) {
 //Show all Orders
 function Order(req, res) {
   try {
+    let page = req.params.page;
     const UserId = req.session.userId;
-    SqlproductService.GetOrder(UserId)
+    SqlproductService.GetOrder(UserId, page)
       .then((data) => {
+        console.log(data);
         res.render("Cart/Order.ejs", {
-          Orders: data,
+          Orders: data.Order,
           message: "",
           username: req.session.userName,
           role: req.session.role,
+          pages: data.pages,
+          current: data.current,
         });
       })
       .catch((error) => {
@@ -512,6 +589,8 @@ function Order(req, res) {
           message: "Some Error!",
           username: req.session.userName,
           role: req.session.role,
+          pages: 1,
+          current: 1,
         });
       });
   } catch (error) {

@@ -3,8 +3,8 @@ const sql = require("mssql/msnodesqlv8");
 const querys = require("../SqlDataContext/Querys/productquery");
 
 //Aws Configuration
-const aws = require( 'aws-sdk' );
-const ID =process.env.AWS_ID;
+const aws = require("aws-sdk");
+const ID = process.env.AWS_ID;
 const SECRET = process.env.AWS_SECRET;
 const BUCKET_NAME = process.env.BACKET_NAME;
 
@@ -12,8 +12,8 @@ const BUCKET_NAME = process.env.BACKET_NAME;
 const s3 = new aws.S3({
   accessKeyId: ID,
   secretAccessKey: SECRET,
-  Bucket: BUCKET_NAME
- });
+  Bucket: BUCKET_NAME,
+});
 
 //addProducts by admin
 async function AddProduct(data) {
@@ -25,7 +25,7 @@ async function AddProduct(data) {
     .input("productDescription", sql.VarChar, data.ProductDescription)
     .input("imageUrl", sql.VarChar, data.url)
     .input("userId", sql.Int, data.UserId)
-    .input("imageKey",sql.VarChar,data.key)
+    .input("imageKey", sql.VarChar, data.key)
     .query(querys.ADDPRODUCTS);
   return response.rowsAffected[0];
 }
@@ -69,13 +69,13 @@ async function UpdateProduct(data, UserId) {
 //delete products by admin
 async function DeleteProduct(id, UserId) {
   const pool = await ConenctedToSql();
-  const productById=await GetProductById(id);  
+  const productById = await GetProductById(id);
   const params = {
     Bucket: BUCKET_NAME,
-    Key: productById[0].ImageKey
-  }
-  await s3.deleteObject(params).promise()
-  console.log("file deleted Successfully")
+    Key: productById[0].ImageKey,
+  };
+  await s3.deleteObject(params).promise();
+  console.log("file deleted Successfully");
   const response = await pool
     .request()
     .input("id", sql.Int, id)
@@ -86,7 +86,6 @@ async function DeleteProduct(id, UserId) {
 
 //.......////////./////////////////////...........
 //getallProducts for users
-
 async function GetAllProduct() {
   const pool = await ConenctedToSql();
   const products = await pool.request().query(querys.GETPRODUCTS);
@@ -172,18 +171,41 @@ async function PlacedOrder(userId) {
 }
 
 //Get Paginated
-async function GetProductByPagination(page, callback) {
-  var numPerPage = 5;
+async function GetProductByPagination(page, productName, priceRange, callback) {
+  let ProuductName = "";
+  let PriceRange = 0;
+  if (priceRange == "" && productName == "") {
+    ProuductName = null;
+    PriceRange = null;
+  } else if (priceRange != "" && productName == "") {
+    ProuductName = null;
+    PriceRange = parseInt(priceRange);
+  } else if (priceRange == "" && productName != "") {
+    ProuductName = productName;
+    PriceRange = null;
+  } else {
+    ProuductName = productName;
+    PriceRange = parseInt(priceRange);
+  }
+  if (priceRange == 0) {
+    PriceRange = null;
+  }
+  var numPerPage = 4;
   const pool = await ConenctedToSql();
   const products = await pool
     .request()
-    .query(`exec sp_product_Paginated ${page},${numPerPage}`);
-  const TotolProducts = await pool.request().query(querys.COUNT);
-  const count = TotolProducts.recordset[0].Totalproducts;
+    .query(
+      `exec sp_product_Paginated ${page},${numPerPage},${ProuductName},${PriceRange}`
+    );
+  const newTotalProducts = await pool
+    .request()
+    .query(`exec TotalProducts ${ProuductName},${PriceRange}`);
+  console.log(newTotalProducts);
+  const newCount = newTotalProducts.recordset[0].TotalProducts;
   const obj = {
     products: products.recordset,
     current: parseInt(page),
-    pages: Math.ceil(count / numPerPage),
+    pages: Math.ceil(newCount / numPerPage),
   };
   callback(obj);
 }
@@ -214,9 +236,9 @@ async function ConfirmOrder(userId, obj) {
         .input("quantity", sql.Int, obj.ProductQuantity[i])
         .query(querys.ADDORDERPRODUCTS);
     }
-    PlacedOrder(userId).then((Data)=>{
+    PlacedOrder(userId).then((Data) => {
       return true;
-    })
+    });
     return false;
   } catch (error) {
     console.log(error);
@@ -224,10 +246,11 @@ async function ConfirmOrder(userId, obj) {
 }
 
 //SQL GET ORDER FOR USER
-async function GetOrder(userId) {
+async function GetOrder(userId, page_number) {
   let OrderArray = [];
   let OrderProductArray = [];
   let ProductArray = [];
+  const page_size = 3;
   const pool = await ConenctedToSql();
 
   const Orders = await pool
@@ -250,12 +273,30 @@ async function GetOrder(userId) {
       }
     });
     let TotalAmount = 0;
+    let OrderStatus = false;
+    let DeliveryDate = null;
     OrderProduct.forEach((orp) => {
       var product = ProductArray.find(function (element) {
         if (element.Id == orp.ProductId) {
           return element;
         }
       });
+
+      if (orp.Status != null || orp.Status == true) {
+        OrderStatus = true;
+      } else {
+        OrderStatus = false;
+      }
+      if (orp.DeliveryDate != null) {
+        if (DeliveryDate == null) {
+            DeliveryDate=orp.DeliveryDate;
+        }
+        if (DeliveryDate > orp.DeliveryDate) {
+          DeliveryDate=orp.DeliveryDate;
+       }
+      } else {
+        DeliveryDate = null;
+      }
       orp.ProductName = product.ProductName;
       orp.ProductPrice = product.ProductPrice;
       orp.ProductDescription = product.ProductDescription;
@@ -265,40 +306,58 @@ async function GetOrder(userId) {
     });
     order.OrderProducts = OrderProduct;
     order.TotalAmount = TotalAmount;
+    order.Status = OrderStatus;
+    order.DeliveryDate = new Date(DeliveryDate).toDateString();
+    order.Date=new Date(order.Date).toDateString();
   });
 
-  return OrderArray;
+  OrderArray.sort(function (a, b) {
+    return b.Id - a.Id;
+  });
+
+  console.log(OrderArray);
+
+  var lengthOfOrder = OrderArray.length;
+  const OrderObj = {
+    Order: OrderArray.slice(
+      (page_number - 1) * page_size,
+      page_number * page_size
+    ),
+    current: parseInt(page_number),
+    pages: Math.ceil(lengthOfOrder / page_size),
+  };
+  return OrderObj;
 }
 
-
 //SQL GET OpenBucket for Admin
-async function OpenBucketAdmin(AdminId) {
+async function OpenBucketAdmin(AdminId, page_number) {
   let OrderArray = [];
   let OrderProductArray = [];
   let ProductArray = [];
+  const page_size = 3;
   const pool = await ConenctedToSql();
 
-  const Orders = await pool
-    .request()
-    .query(querys.GETALLORDER);
+  const Orders = await pool.request().query(querys.GETALLORDER);
 
   const Products = await pool.request().query(querys.GETPRODUCTS);
 
-  const OrdersProdcuts = await pool.request()
-  .input("adminId",sql.Int,AdminId).query(querys.GETORDERPRODUCTSADMIN);
+  const OrdersProdcuts = await pool
+    .request()
+    .input("adminId", sql.Int, AdminId)
+    .query(querys.GETORDERPRODUCTSADMIN);
 
   OrderArray = Orders.recordset;
   OrderProductArray = OrdersProdcuts.recordset;
   ProductArray = Products.recordset;
 
-   var responsObj=[];
+  var responsObj = [];
   OrderArray.forEach((order) => {
     const OrderProduct = OrderProductArray.filter((Element) => {
       if (Element.OrderId == order.Id) {
         return Element;
       }
     });
-    if(OrderProduct.length>0){
+    if (OrderProduct.length > 0) {
       let TotalAmount = 0;
       OrderProduct.forEach((orp) => {
         var product = ProductArray.find(function (element) {
@@ -315,13 +374,97 @@ async function OpenBucketAdmin(AdminId) {
       });
       order.OrderProducts = OrderProduct;
       order.TotalAmount = TotalAmount;
+      order.Date=new Date(order.Date).toDateString();
       responsObj.push(order);
     }
+    order.Status = OrderProduct[0].Status;
+    order.DeliveryDate = new Date(OrderProduct[0].DeliveryDate).toDateString();
   });
+
+  responsObj.sort(function (a, b) {
+    return b.Id - a.Id;
+  });
+
+  var lengthOfOrder = responsObj.length;
+  const BucketObject = {
+    data: responsObj.slice(
+      (page_number - 1) * page_size,
+      page_number * page_size
+    ),
+    current: parseInt(page_number),
+    pages: Math.ceil(lengthOfOrder / page_size),
+  };
+  return BucketObject;
+}
+
+//SQL GET bucket order by Id
+async function GetBucketOrderById(orderId, AdminId) {
+  let OrderArray = [];
+  let OrderProductArray = [];
+  let ProductArray = [];
+  const pool = await ConenctedToSql();
+
+  //get orders
+  const Orders = await pool.request().query(querys.GETALLORDER);
+
+  //get product
+  const Products = await pool.request().query(querys.GETPRODUCTS);
+
+  const OrdersProdcuts = await pool
+    .request()
+    .input("adminId", sql.Int, AdminId)
+    .query(querys.GETORDERPRODUCTSADMIN);
+
+  OrderArray = Orders.recordset;
+  OrderProductArray = OrdersProdcuts.recordset;
+  ProductArray = Products.recordset;
+
+  var responsObj = [];
+  OrderArray.forEach((order) => {
+    const OrderProduct = OrderProductArray.filter((Element) => {
+      if (Element.OrderId == order.Id && Element.OrderId == orderId) {
+        return Element;
+      }
+    });
+    if (OrderProduct.length > 0) {
+      let TotalAmount = 0;
+      OrderProduct.forEach((orp) => {
+        var product = ProductArray.find(function (element) {
+          if (element.Id == orp.ProductId) {
+            return element;
+          }
+        });
+        orp.ProductName = product.ProductName;
+        orp.ProductPrice = product.ProductPrice;
+        orp.ProductDescription = product.ProductDescription;
+        orp.ImageUrl = product.ImageUrl;
+        orp.ProductTotal = orp.Quantity * product.ProductPrice;
+        TotalAmount = TotalAmount + orp.Quantity * product.ProductPrice;
+      });
+      order.OrderProducts = OrderProduct;
+      order.TotalAmount = TotalAmount;
+      order.Deliverydate = responsObj.push(order);
+    }
+  });
+
   return responsObj;
 }
 
+async function UpdateOrders(orderId, adminId, data) {
+  var datetime = new Date(data.date);
 
+  const pool = await ConenctedToSql();
+  const response = await pool
+    .request()
+    .input("", sql.VarChar, data.ProductName)
+    .input("status", sql.Bit, 1)
+    .input("deliveryDate", sql.Date, datetime)
+    .input("orderId", sql.Int, orderId)
+    .input("adminId", sql.Int, adminId)
+    .query(querys.UPDATEORDERS);
+
+  return response.rowsAffected[0];
+}
 
 module.exports = {
   AddProduct,
@@ -339,4 +482,6 @@ module.exports = {
   ConfirmOrder,
   GetOrder,
   OpenBucketAdmin,
+  GetBucketOrderById,
+  UpdateOrders,
 };

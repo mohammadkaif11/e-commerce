@@ -15,10 +15,11 @@
     <%- include("../partials/header.ejs",{isAuth:true}); %>
     <div class="container mx-2 my-2">
       <div class="orderContainer">
-        <h3 style="text-align: center">Your Order</h3>
+        <h3 style="text-align: center" class="my-2">Your Bucket</h3>
         <hr />
       </div>
     </div>
+
     <div class="container">
       <% if (message.length > 0) { %>
       <div class="alert alert-danger"><%= message %></div>
@@ -70,7 +71,7 @@
                     </div>
                     <div class="col-md-2 d-flex justify-content-center">
                       <div>
-                        <p class="mb-4 pb-2">Name</p>
+                        <p class="small text-muted mb-4 pb-2">Name</p>
                         <p class="lead fw-normal mb-0">
                           <%= element.ProductName %>
                         </p>
@@ -78,7 +79,7 @@
                     </div>
                     <div class="col-md-2 d-flex justify-content-center">
                       <div>
-                        <p class="mb-4 pb-2">Quantity</p>
+                        <p class="small text-muted mb-4 pb-2">Quantity</p>
                         <p class="lead fw-normal mb-0">
                           <%= element.Quantity %>
                         </p>
@@ -86,7 +87,7 @@
                     </div>
                     <div class="col-md-2 d-flex justify-content-center">
                       <div>
-                        <p class="mb-4 pb-2">Price</p>
+                        <p class="small text-muted mb-4 pb-2">Price</p>
                         <p class="lead fw-normal mb-0">
                           <%= element.ProductPrice %>
                         </p>
@@ -94,7 +95,7 @@
                     </div>
                     <div class="col-md-2 d-flex justify-content-center">
                       <div>
-                        <p class="mb-4 pb-2">Total</p>
+                        <p class="small text-muted mb-4 pb-2">Total</p>
                         <p class="lead fw-normal mb-0">
                           $<%= element.ProductTotal %>
                         </p>
@@ -102,7 +103,7 @@
                     </div>
                     <div class="col-md-2 d-flex justify-content-center">
                       <div>
-                        <p class="mb-4 pb-2">Details</p>
+                        <p class="small text-muted mb-4 pb-2">Details</p>
                         <a
                           type="button"
                           href="/GetById/<%= element.ProductId %>"
@@ -115,11 +116,12 @@
                 </div>
               </div>
               <% }); %>
-              <div style="background-color: white" class="card mb-5">
+
+              <div style="background-color: white" class="card mb-4">
                 <div class="card-body p-4">
                   <div class="float-end">
                     <p class="mb-0 me-5 d-flex align-items-center">
-                      <span class="me-2">Order total:</span>
+                      <span class="small text-muted me-2">Order total:</span>
                       <span class="lead fw-normal"
                         ><%= element.TotalAmount %></span
                       >
@@ -127,50 +129,17 @@
                   </div>
                 </div>
               </div>
-              <div style="background-color: white" class="card mb-5">
-
+              <div style="background-color: white" class="card mb-4">
                 <div class="card-body p-4">
-                  <div class="float-start">
-                    <p class="mb-0 me-5 d-flex align-items-center">
-                      <%if(element.Status!=false && element.DeliveryDate!=null){%>
-                        <span class="small text-muted me-2"
-                        >Delivery Date : <%= element.DeliveryDate %></span
-                      >
-                      <%}%>
-                    </p>
-                    </p>
-                  </div>
                   <div class="float-end">
                     <p class="mb-0 me-5 d-flex align-items-center">
-                      <%if(element.Status==false){%>
-                        <p class="mb-0 me-5 d-flex align-items-center">
-                          <span class="me-2">Order Status:</span>
-                          <span
-                            class="lead fw-normal my-2"
-                            style="
-                              background-color: red;
-                              border: 2px solid redd;
-                              border-radius: 15px;
-                              padding: 4px;
-                            "
-                            >Seller updated soon</span
-                          >
-                        </p>
-                      <%}else{%>
-                        <p class="mb-0 me-5 d-flex align-items-center">
-                          <span class="me-2">Order Status:</span>
-                          <span
-                            class="lead fw-normal my-2"
-                            style="
-                              background-color: green;
-                              border: 2px solid green;
-                              border-radius: 15px;
-                              padding: 4px;
-                            "
-                            >Approved By Seller</span
-                          >
-                        </p>
-                      <%}%>
+                      <span class="small text-muted me-2">Updated Order:</span>
+                      <button
+                        type="button"
+                        class="btn btn-danger lead fw-normal my-2"
+                      >
+                        Update
+                      </button>
                     </p>
                   </div>
                 </div>
@@ -183,17 +152,41 @@
       </section>
     </div>
 
-    <nav style="display: flex; align-items: center;justify-content: center;" aria-label="Page navigation example">
-      <ul class="pagination">
-        <% for(var i=1;i<=pages;i++) {%>
-          <% if(i==current){ %>
-            <li class="page-item  active" ><a class="page-link" href="/checkOrder/<%=i%>"><%=i%></a></li>
-            <% } else{ %>  
-              <li class="page-item"><a class="page-link" href="/checkOrder/<%=i%>"><%=i%></a></li>
-              <% } %>
-        <% }; %>
-      </ul>
-    </nav>
+    <div class="container">
+      <form
+        action="/updateOrder/<%= Orders[0].Id %>"
+        method="post"
+        class="mx-3 my-3"
+        style="border: #2874f0 3px solid; padding: 30px"
+        onsubmit=""
+      >
+        <div class="mb-3">
+          <label for="Date" class="form-label">Delivery Date</label>
+          <input
+            type="date"
+            name="date"
+            class="form-control"
+            id="date"
+            aria-describedby="date"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="transaction" class="form-label">Transaction</label>
+          <input
+            type="number"
+            name="transaction"
+            class="form-control"
+            id="transaction"
+            value="<%= Orders[0].TotalAmount %>"
+            disabled
+            required
+          />
+        </div>
+        <button   type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+
     <%- include("../partials/footer.ejs"); %>
     <script
       src="https://code.jquery.com/jquery-3.5.1.slim.min.js"

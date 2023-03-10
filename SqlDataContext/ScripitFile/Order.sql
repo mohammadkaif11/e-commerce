@@ -7,9 +7,12 @@ create Table Orders(
 );
 
 create Table OrderProducts(
-    Id int primary key identity,
+    Id int primary key identity(1,1),
 	OrderId int,
 	ProductId int,
     AdminId int,
 	Quantity int,
+	[Status] bit,
+	DeliveryDate date
+
 );

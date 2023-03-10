@@ -23,7 +23,7 @@
         <% products.forEach(function(element) { %>
           <div class="center-card-div">
             <div class="card" style="width: 20rem;">
-              <img height="300px" width="200px" src="/<%=element.ImageUrl%>" class="card-img-top" alt="...">
+              <img height="300px" width="200px" src="<%=element.ImageUrl%>" class="card-img-top" alt="...">
               <div class="card-body">
                 <form method="post" action="/AdminUpdateProduct">
                     <input hidden name="_id" type="number" value=<%= element.Id %>   />

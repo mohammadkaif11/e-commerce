@@ -3,7 +3,7 @@ const querys = {
     GETADMINPRODUCTS:"SELECT * FROM [ECM].[dbo].[Products] where UserId=@userid",
     ADDPRODUCTS:"INSERT INTO [ECM].[dbo].[Products] (UserId,ProductName,ProductPrice,ProductDescription,ImageUrl,ImageKey) VALUES (@userId,@productName,@productPrice,@productDescription,@imageUrl,@imageKey);",
     GETPRODUCTBYID: "SELECT * FROM [ECM].[dbo].[Products] WHERE Id= @id",
-    UPDATEPRODUCT:"UPDATE [ECM].[dbo].[Products] SET  ProductName=@productName , ProductPrice=@productPrice , ProductDescription=@productDescription  WHERE Id = @id and UserId = userId;",
+    UPDATEPRODUCT:"UPDATE [ECM].[dbo].[Products] SET  ProductName=@productName , ProductPrice=@productPrice , ProductDescription=@productDescription  WHERE Id = @id and UserId = @userId;",
     DELETEPRODUCTS:"DELETE FROM [ECM].[dbo].[Products] WHERE Id=@id and UserId = userId;",
     ADDCART:"INSERT INTO [ECM].[dbo].[Cart] (ProductId,UserId,AdminId) VALUES (@productId,@userId,@adminId);",
     GETCART:"SELECT * FROM [ECM].[dbo].[Cart] WHERE UserId = @userId",
@@ -17,6 +17,7 @@ const querys = {
     GETORDERPRODUCTS:"SELECT * FROM [ECM].[dbo].[OrderProducts]",
     GETALLORDER:"SELECT * FROM [ECM].[dbo].[Orders]",
     GETORDERPRODUCTSADMIN:"SELECT * FROM [ECM].[dbo].[OrderProducts]  WHERE AdminId=@adminId",
+    UPDATEORDERS:"UPDATE OrderProducts SET Status=@status,DeliveryDate=@deliveryDate where OrderId=@orderId and AdminId=@adminId"
   };
 
 

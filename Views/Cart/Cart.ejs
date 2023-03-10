@@ -27,11 +27,6 @@
                 <div class="card-body">
                   <h5 class="card-title">Name:<%= element.ProductName %></h5>
                   <span style="font-weight: bold;">Price:<%= element.ProductPrice %></span>
-                  <div>
-                    <span style="font-weight: bold;">Qunatity: <span id="ProductId-<%= element.ProductId %>">0</span></span><br>
-                    <button class="btn btn-primary" onclick="deceremnt(`<%= element.ProductId %>`)">-</button>
-                    <button class="btn btn-primary" onclick="increment(`<%= element.ProductId %>`)">+</button>
-                  </div>
                   <div class="row">
                     <a href="/GetById/<%= element.ProductId %>" class="btn btn-primary my-1">Details</a>  
                     <a href="/RemoveCart/<%= element.ProductId %>" class="btn btn-primary my-1">Remove</a>  
@@ -51,21 +46,8 @@
 </html>
 
 <script>
-  function increment(id){
-    const Qunatity=document.getElementById(`ProductId-${id}`);
-    Qunatity.innerText=parseInt(Qunatity.innerText)+1;
-  }
-
-  function deceremnt(id){
-    const Qunatity=document.getElementById(`ProductId-${id}`);
-    if(Qunatity.innerText>0){
-      Qunatity.innerText=parseInt(Qunatity.innerText)-1;
-    }
-  }
-  
   function PlaceOrder(){
    confirm("Confirm?")
    window.location.href="/ConfirmPage"
   }
-  console.log("hello world");
 </script>
