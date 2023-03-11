@@ -10,14 +10,19 @@ const querys = {
     DELETECART:"DELETE FROM [ECM].[dbo].[Cart] WHERE ProductId=@productId and UserId=@userId;",
     PLACEORDER:"DELETE FROM [ECM].[dbo].[Cart] WHERE  UserId=@userId;",
     COUNT:"SELECT count(*) as Totalproducts FROM products",
-    ADDORDER:"INSERT INTO [ECM].[dbo].[Orders] (UserId,Date,Address,Pincode) VALUES (@userId,@date,@address,@pincode)",
+    ADDORDER:"INSERT INTO [ECM].[dbo].[Orders] (UserId,Date,Address,Pincode,ModePayment) VALUES (@userId,@date,@address,@pincode,@modePayment)",
     GETLASTORDER:"SELECT * FROM [ECM].[dbo].[Orders] WHERE UserId=@userId",
     ADDORDERPRODUCTS:"INSERT INTO [ECM].[dbo].[OrderProducts] (OrderId,ProductId,AdminId,Quantity) VALUES (@orderId,@productId,@adminId,@quantity)",
     GETORDER:"SELECT * FROM [ECM].[dbo].[Orders] WHERE UserId=@userId",
     GETORDERPRODUCTS:"SELECT * FROM [ECM].[dbo].[OrderProducts]",
     GETALLORDER:"SELECT * FROM [ECM].[dbo].[Orders]",
     GETORDERPRODUCTSADMIN:"SELECT * FROM [ECM].[dbo].[OrderProducts]  WHERE AdminId=@adminId",
-    UPDATEORDERS:"UPDATE OrderProducts SET Status=@status,DeliveryDate=@deliveryDate where OrderId=@orderId and AdminId=@adminId"
+    UPDATEORDERS:"UPDATE OrderProducts SET Status=@status,DeliveryDate=@deliveryDate where OrderId=@orderId and AdminId=@adminId",
+    CREATETRANS:"INSERT INTO [ECM].[dbo].[Trans] (AdminId,OrderId,TotalAmount,PaymentMode) VALUES (@adminId,@orderId,@totalAmount,@paymentMode);",
+    GETORDERBYID:"SELECT * FROM [ECM].[dbo].[Orders] where Id=@orderId",
+    GETORDERPRODUCTSBYID:"SELECT * FROM [ECM].[dbo].[OrderProducts] where OrderId=@orderId and AdminId=@adminId",
+    GETTRANS:"SELECT * FROM [ECM].[dbo].[Trans] WHERE AdminId=@adminId",
+    GETRANSBYCHECK:"SELECT * FROM [ECM].[dbo].[Trans] WHERE AdminId=@adminId AND OrderId=@orderId"
   };
 
 

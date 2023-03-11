@@ -56,51 +56,61 @@ router.get("/checkOrder/:page", CheckUserLogin, Order);
 router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
 
 //Admin Routes
-router.post("/AddProduct",AdminRole, upload.single("product-image"), AddProduct);
+router.post(
+  "/AddProduct",
+  AdminRole,
+  upload.single("product-image"),
+  AddProduct
+);
 router.get("/Admin", AdminRole, AdminView);
 router.get("/AdminGetById/:id", AdminRole, AdminGetById);
 router.post("/AdminUpdateProduct", AdminRole, UpdateProduct);
 router.get("/AdmindeleteProduct/:id", AdminRole, DeleteAdmin);
 router.get("/bucket/:page", AdminRole, OpenBucket);
-router.get("/updateOrder/:orderId",AdminRole, GetOrderbyId);
-router.post("/updateOrder/:orderId",AdminRole, UpdateOrderStatus);
+router.get("/updateOrder/:orderId", AdminRole, GetOrderbyId);
+router.post("/updateOrder/:orderId", AdminRole, UpdateOrderStatus);
+router.get("/transactionhistory", AdminRole, TransactionHistory);
 
 //Admin User Get all Product
-
 async function PageView(req, res) {
   try {
     var page = req.params.page || 1;
-    var productName=req.query.productName || "";
-    var priceRange=req.query.priceRange || "";
-       if (req.session.role == "Admin") {
+    var productName = req.query.productName || "";
+    var priceRange = req.query.priceRange || "";
+    if (req.session.role == "Admin") {
       res.redirect("/Admin");
       return;
     }
-    SqlproductService.GetProductByPagination(page,productName,priceRange, function (data) {
-      if (data) {
-        res.render("Product/paginationHomepage.ejs", {
-          products: data.products,
-          pages: data.pages,
-          current: data.current,
-          message: "",
-          username: req.session.userName,
-          role: req.session.role,
-          productName:productName,
-          priceRange:priceRange || 0
-        });
-      } else {
-        res.render("Product/paginationHomepage.ejs", {
-          products: [],
-          pages: 1,
-          current: 1,
-          message: "In valid pageNumber",
-          username: req.session.userName,
-          role: req.session.role,
-          roductName:"",
-          priceRange:0
-        });
+    SqlproductService.GetProductByPagination(
+      page,
+      productName,
+      priceRange,
+      function (data) {
+        if (data) {
+          res.render("Product/paginationHomepage.ejs", {
+            products: data.products,
+            pages: data.pages,
+            current: data.current,
+            message: "",
+            username: req.session.userName,
+            role: req.session.role,
+            productName: productName,
+            priceRange: priceRange || 0,
+          });
+        } else {
+          res.render("Product/paginationHomepage.ejs", {
+            products: [],
+            pages: 1,
+            current: 1,
+            message: "In valid pageNumber",
+            username: req.session.userName,
+            role: req.session.role,
+            roductName: "",
+            priceRange: 0,
+          });
+        }
       }
-    });
+    );
   } catch (error) {
     console.log(error);
     res.render("Error/error.ejs");
@@ -278,6 +288,7 @@ function GetOrderbyId(req, res) {
     const UserId = req.session.userId;
     SqlproductService.GetBucketOrderById(orderId, UserId)
       .then((data) => {
+        console.log("order data",data)
         res.render("Admin/UpdateOrder.ejs", {
           Orders: data,
           message: "",
@@ -300,8 +311,34 @@ function GetOrderbyId(req, res) {
   }
 }
 
-//Update the order  status with date and transaction
+//Transaction history
+function TransactionHistory(req, res) {
+  try {
+    const UserId = req.session.userId;
+    SqlproductService.GetAllTrans(UserId)
+      .then((data) => {
+        res.render("Admin/Trans.ejs", {
+          Transaction: data,
+          message: "",
+          username: req.session.userName,
+          role: req.session.role,
+        });
+      })
+      .catch((error) => {
+        res.render("Admin/Trans.ejs", {
+          Transaction: [],
+          message: "",
+          username: req.session.userName,
+          role: req.session.role,
+        });
+      });
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
 
+//Update the order  status with date and transaction
 function UpdateOrderStatus(req, res) {
   try {
     let orderId = req.params.orderId;
@@ -312,19 +349,19 @@ function UpdateOrderStatus(req, res) {
     SqlproductService.UpdateOrders(orderId, UserId, req.body)
       .then((data) => {
         SqlproductService.GetBucketOrderById(orderId, UserId).then((data) => {
-          res.redirect('/bucket/1');
+          res.redirect("/bucket/1");
         });
       })
       .catch((error) => {
         console.log(error);
-        res.redirect('/bucket/1');
+        res.redirect("/bucket/1");
       });
   } catch (error) {
     console.log(error);
     res.render("Error/error.ejs");
   }
 }
-
+//-----------------------------------------------//
 /*
 function GetById(req,res){
     try {
@@ -442,9 +479,6 @@ function AddCart(req, res) {
     let productId = req.params.id;
     let userId = req.session.userId;
     const AdminId = req.query.adminId;
-    console.log(productId);
-    console.log(userId);
-    console.log(AdminId);
     SqlproductService.AddtoCart(productId, userId, AdminId)
       .then((response) => {
         res.redirect("/CheckCart");
@@ -523,7 +557,7 @@ function ConfirmPage(req, res) {
     } else {
       SqlproductService.GetAllCart(userId)
         .then((response) => {
-          console.log(response);
+          console.log('cart response',response);
           res.render("Cart/ConfirmPage.ejs", {
             Cart: response,
             message: "",
@@ -555,6 +589,7 @@ function ConfirmPagePost(req, res) {
         username: req.session.userName,
       });
     } else {
+      console.log(req.body);
       SqlproductService.ConfirmOrder(userId, req.body).then((data) => {
         res.redirect("/checkOrder/1");
       });

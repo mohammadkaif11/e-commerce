@@ -1,61 +1,144 @@
+
 <footer>
-    <div style="left: 0 ;bottom: 0;width: 100vw;">
-      <div id="footer-cols" class="row p-4 footer-cols">
-        <ul class="col-3">
-          <li style="font-size:1rem;padding-bottom: 2px;color: white;">Address</li>
-          <hr>
-          <li><a>ZZZZ Workspace</a></li>
-          <li><a>Street 43,building 4A</a></li>
-          <li><a>Industrial Area</a></li>
-          <li><a>Aqwertyu </a></li>
-          <li><a>Mumbai</a></li>
-        </ul>
-        <ul class="col-3">
-          <li style="font-size:1rem;padding-bottom: 2px;color: white;">Clients</li>
-          <hr>
-          <li><a>XYZ org</a></li>
-          <li><a>ABC org</a></li>
-          <li><a>IJK org</a></li>
-          <li><a>Qwerty Corp</a></li>
-          <li><a>ZAQ PVT</a></li>
-        </ul>
-        <ul class="col-3">
-          <li style="font-size:1rem;padding-bottom: 2px;color: white;">Stack</li>
-          <hr>
-          <li><a>HTML5,CSS,JS</a></li>
-          <li><a>React</a></li>
-          <li><a>Angular</a></li>
-          <li><a>NodeJS</a></li>
-          <li><a>Django</a></li>
-        </ul>
-        <ul class="col-3">
-          <li style="font-size:1rem;padding-bottom: 2px;color: white;">About Being Geeky</li>
-          <hr>
-          <li><a>About CEO</a></li>
-          <li><a>About Team</a></li>
-          <li><a>Location</a></li>
-          <li><a>Working Atmosphere</a></li>
-          <li><a>Contact Being Geeky</a></li>
-        </ul>
-      </div>
+  <div class="footer">
+    <div class="contain">
+    <div class="col">
+      <h2>Company</h2>
+      <ul>
+        <li>About us</li>
+        <li> Our Mission</li>
+        <li>Services</li>
+      </ul>
     </div>
-</footer>
+    <div class="col">
+      <h2>Products</h2>
+      <ul>
+        <li>SEO</li>
+        <li>Content Development</li>
+        <li>Digital Marketing</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h2>Team</h2>
+      <ul>
+        <li>HR Team</li>
+        <li>Finance Team</li>
+        <li>Content Team</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h2>Resources</h2>
+      <ul>
+        <li>Webmail</li>
+        <li>Web templates</li>
+        <li>Email templates</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h2>Contact</h2>
+      <ul>
+        <li>+91 9051 XXXXXX</li>
+        <li>033 2464 XXXX</li>
+        <li>abc@gmail.com</li>
+      </ul>
+    </div>
+    <div class="col address">
+      <h2>Address </h2>
+      <ul>
+        <li>Sky Towers, Service Road, Kolkata</li>
+    </ul>
+    </div>
+  <div class="clearfix"></div>
+  </div>
+  </div>
+ </footer>
+  
   <style>
-    footer{
-      background-color: #2874f0;
-      bottom: 0;
+   .footer {
+  width: 100%;
+  background-color: #2874f0;
+  position: relative;
+  bottom: 0;
+}
+.footer .col {
+  width: 190px;
+  height: auto;
+  float: left;
+  box-sizing: border-box;
+  padding: 20px;
+}
+.footer .col h2 {
+  margin: 0;
+  padding: 0;
+  font-size: 15px;
+  line-height: 17px;
+  padding: 10px 0;
+  color: white;
+  text-transform: uppercase;
+}
+.footer .col ul {
+  list-style-type: none;
+  padding: 0;
+}
+.footer .col ul li {
+  color: black;
+  font-size: 12px;
+  padding: 5px 0px;
+}
+.address ul li {
+  display: inline-block;
+  padding-right: 5px !important;
+}
+
+.footer .col ul li:hover {
+  cursor: pointer;
+  color: lightgray;
+  font-weight: bold;
+}
+.clearfix {
+  clear: both;
+}
+@media only screen and (min-width: 1280px) {
+  .contain {
+    width: 1200px;
+    margin: 0 auto;
+  }
+}
+@media only screen and (max-width: 1139px) {
+  .contain .address {
+    width: 1000px;
+    display: block;
+  }
+  .address h2 {
+    margin: 0px;
+  }
+}
+@media only screen and (max-width: 950px) {
+  .footer .col {
+    width: 33%;
+  }
+  .footer .col h2 {
+    font-size: 14px;
+  }
+  .footer .col ul li {
+    font-size: 13px;
+  }
+}
+@media only screen and (max-width: 500px) {
+    .footer .col {
+      width: 50%;
     }
-    .footer-cols ul li {
-    color: white;
-    font-size: 22px;
-   list-style: none;
+    .footer .col h2 {
+      font-size: 14px;
+    }
+    .footer .col ul li {
+      font-size: 13px;
+    }
+}
+@media only screen and (max-width: 340px) {
+  .footer .col {
+    width: 100%;
   }
-  #footer-cols{
-    background-color: #2874f0
-  }
-  @media screen and (max-width: 770px) {
-   footer{
-    display: none;
-   }
-  }
+}
+
   </style>

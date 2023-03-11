@@ -3,8 +3,10 @@ create Table Orders(
   UserId int,
   [Date] date,
   [Address] varchar(max),
-  [Pincode] varchar(max)
+  [Pincode] varchar(max),
+   ModePayment varchar(max)
 );
+
 
 create Table OrderProducts(
     Id int primary key identity(1,1),
@@ -14,5 +16,12 @@ create Table OrderProducts(
 	Quantity int,
 	[Status] bit,
 	DeliveryDate date
-
 );
+
+create table Trans(
+Id  int primary key identity(1,1),
+AdminId int,
+OrderId int,
+TotalAmount decimal,
+PaymentMode varchar(max)
+)
