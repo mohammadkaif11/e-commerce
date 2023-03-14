@@ -91,7 +91,7 @@ async function OpenBucketAdmin(AdminId, page_number) {
   let OrderArray = [];
   let OrderProductArray = [];
   let ProductArray = [];
-  const page_size = 3;
+  const page_size = 5;
 
   const pool = await ConenctedToSql();
 
@@ -543,7 +543,7 @@ async function GetOrder(userId, page_number) {
   let OrderProductArray = [];
   let ProductArray = [];
 
-  const page_size = 3;
+  const page_size = 5;
   const pool = await ConenctedToSql();
 
   //Getall Admin Order
