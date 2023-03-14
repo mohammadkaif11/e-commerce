@@ -259,7 +259,6 @@ function OpenBucket(req, res) {
     const UserId = req.session.userId;
     SqlproductService.OpenBucketAdmin(UserId, page)
       .then((data) => {
-        console.log(data)
         res.render("Admin/Bucket.ejs", {
           Orders: data.data,
           message: "",

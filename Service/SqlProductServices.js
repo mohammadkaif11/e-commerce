@@ -4,6 +4,7 @@ const querys = require("../SqlDataContext/Querys/productquery");
 
 //Aws Configuration
 const aws = require("aws-sdk");
+const { resolve } = require("path");
 const ID = process.env.AWS_ID;
 const SECRET = process.env.AWS_SECRET;
 const BUCKET_NAME = process.env.BACKET_NAME;
@@ -219,7 +220,7 @@ async function GetBucketOrderById(orderId, AdminId) {
   return responsObj;
 }
 
-//Update Order and Create transaction
+//Update Order
 async function UpdateOrders(orderId, adminId, data) {
   var datetime = data.date.length > 0 ? new Date(data.date) : null;
   var IsCancel = data.CancelOrder != undefined ? true : false;
@@ -355,6 +356,7 @@ async function UpdateOrders(orderId, adminId, data) {
   }
 }
 
+
 //Get Transaction
 async function GetAllTrans(adminId) {
   const pool = await ConenctedToSql();
@@ -368,9 +370,9 @@ async function GetAllTrans(adminId) {
     return b.OrderId - a.OrderId;
   });
 
-  transaction.forEach(function(element){
-    element.Date=new Date(element.Date).toDateString();
-  })
+  transaction.forEach(function (element) {
+    element.Date = new Date(element.Date).toDateString();
+  });
   return transaction;
 }
 
@@ -431,7 +433,7 @@ async function GetAllCart(user_id) {
       cartObj.ProductDescription = product.ProductDescription;
       cartObj.ProductPrice = product.ProductPrice;
       cartObj.ImageUrl = product.ImageUrl;
-      cartObj.Quantity=product.Quantity;
+      cartObj.Quantity = product.Quantity;
       responsObj.push(cartObj);
     }
   });
@@ -670,41 +672,50 @@ async function GetOrder(userId, page_number) {
 }
 
 //Cancel Order
-async function CancelOrder(id,userId){
+async function CancelOrder(id, userId) {
   const pool = await ConenctedToSql();
 
   const Order = await pool
     .request()
     .input("orderId", sql.Int, id)
     .query(querys.GETORDERBYID);
-  
+
   //Getall Admin Order
   const CancelOrder = await pool
     .request()
     .input("userId", sql.Int, userId)
-    .input("id",sql.Int,id)
+    .input("id", sql.Int, id)
     .query(querys.CANCELORDERS);
 
-    const OrderProducts = await pool
+  const OrderProducts = await pool
     .request()
     .input("orderId", sql.Int, id)
     .query(querys.GETORDERPRODUCTSBYORDERID);
 
-    OrderProducts.recordset.forEach(element => {
-      if(element.Status!=null && element.Status==true && element.IsCancel!=true){
-        UpdateProductQuantityAfterCancel(element.ProductId,element.Quantity,element.AdminId).then((data)=>{
-            console.log(`update Product Quantity`)
-        })
-        updateTrans(element.OrderId,element.AdminId).then((data)=>{
-          console.log('Trans Update')
-        })
-      }
-    });
+  OrderProducts.recordset.forEach((element) => {
+    if (
+      element.Status != null &&
+      element.Status == true &&
+      element.IsCancel != true
+    ) {
+      UpdateProductQuantityAfterCancel(
+        element.ProductId,
+        element.Quantity,
+        element.AdminId
+      ).then((data) => {
+        console.log(`update Product Quantity`);
+      });
+      updateTrans(element.OrderId, element.AdminId).then((data) => {
+        console.log("Trans Update");
+      });
+    }
+  });
 
-    return CancelOrder.rowsAffected[0];
+  return CancelOrder.rowsAffected[0];
 }
 
-//UPdate Product Quantity
+
+//Update Product Quantity
 async function UpdateProductQuantity(id, quantity, userId) {
   try {
     const pool = await ConenctedToSql();
@@ -720,6 +731,18 @@ async function UpdateProductQuantity(id, quantity, userId) {
     console.log(error);
   }
 }
+
+//Update Product Quantity
+async function UpdateProductQuantityTrans(request,id, quantity, userId) {
+       request()
+      .input("id", sql.Int, id)
+      .input("userId", sql.Int, userId)
+      .input("quantity", sql.Int, quantity)
+      .query(querys.UPDATEPRODUCTQUANTITY);
+
+    return UpdateProduct.rowsAffected[0];
+}
+
 
 //UPdate Product Quantity after Cancel
 async function UpdateProductQuantityAfterCancel(id, quantity, userId) {
@@ -739,7 +762,7 @@ async function UpdateProductQuantityAfterCancel(id, quantity, userId) {
 }
 
 //Update Trans after user cancle
-async function updateTrans(orderId,AdminId){
+async function updateTrans(orderId, AdminId) {
   try {
     const pool = await ConenctedToSql();
     const UpdateProduct = await pool
@@ -753,7 +776,6 @@ async function updateTrans(orderId,AdminId){
     console.log(error);
   }
 }
-
 
 module.exports = {
   AddProduct,
@@ -774,5 +796,5 @@ module.exports = {
   GetBucketOrderById,
   UpdateOrders,
   GetAllTrans,
-  CancelOrder
+  CancelOrder,
 };
