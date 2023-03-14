@@ -53,7 +53,7 @@
                   <input type="number" hidden name="ProductId" value=<%=element.ProductId%>>
                   <span style="font-weight: bold;">Price:<%= element.ProductPrice %></span>
                   <div>
-                    <span style="font-weight: bold;">Qunatity: <input  required value=1 type="number"  name="ProductQuantity"></span>
+                    <span style="font-weight: bold;">Qunatity: <input max=<%= element.Quantity %>  required value=1 type="number"  name="ProductQuantity"></span>
                   </div>
                   <div class="row">
                     <a href="/GetById/<%= element.ProductId %>" class="btn btn-primary my-1">Details</a>  

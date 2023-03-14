@@ -29,18 +29,35 @@
         <thead>
           <tr>
             <th scope="col">S.no</th>
+            <th scope="col">Date</th>
             <th scope="col">OrderId</th>
             <th scope="col">TotalPayment</th>
             <th scope="col">Mode of Payment</th>
+            <th scope="col">OrderStatus</th>
+            <th scope="col">Reason</th>
           </tr>
         </thead>
         <tbody>
           <% Transaction.forEach(function(element ,index) { %>
           <tr>
             <th scope="row"><%= index+1%></th>
+            <td><%= element.Date%></td>
             <td><%= element.OrderId%></td>
             <td><%= element.TotalAmount%></td>
             <td>$ <%= element.PaymentMode%></td>
+            <% if(element.IsCancel==false && element.CustomerCancel==false) {%>
+            <td style="color: white; background-color: green">Order Success</td>
+
+            <%}else {%>
+            <td style="color: white; background-color: red">Order Cancel</td>
+
+            <%}%>
+            <% if(element.CustomerCancel==false) {%>
+              <td><%= element.Message%></td>
+  
+              <%}else {%>
+                <td>User have Cancel Order</td>  
+              <%}%>
           </tr>
           <% }); %>
         </tbody>

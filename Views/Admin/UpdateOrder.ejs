@@ -153,7 +153,6 @@
             class="form-control"
             id="date"
             aria-describedby="date"
-            required
           />
         </div>
         <div class="mb-3">
@@ -167,6 +166,22 @@
             disabled
             required
           />
+        </div>       
+        <div class="mb-3">
+          <label for="transaction" class="form-label">Message</label>
+          <input
+            type="text"
+            name="Message"
+            class="form-control"
+            id="Message"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <input class="form-check-input" name="CancelOrder" type="checkbox" value=true id="flexCheckDefault">
+          <label class="form-check-label" for="flexCheckDefault">
+            Cancel Order
+          </label>
         </div>
         <button   type="submit" class="btn btn-primary">Submit</button>
       </form>

@@ -5,4 +5,5 @@ create Table Products(
     ProductPrice decimal,
     ProductDescription varchar(max),
 	 ImageUrl varchar(max),
+      Quantity int 
 	 );

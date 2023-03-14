@@ -24,7 +24,8 @@
           <img height="300px" width="200px" src="<%=element.ImageUrl%>" class="card-img-top" alt="...">
           <div class="card-body">
             <h5 class="card-title">Name:<%= element.ProductName %></h5>
-            <span style="font-weight: bold;">Price:<%= element.ProductPrice %></span>
+            <span style="font-weight: bold;">Price:<%= element.ProductPrice %></span><br>
+            <span style="font-weight: bold;">Quantity:<%= element.Quantity %></span>
             <div class="button">
               <a href="/AdminGetById/<%= element.Id %>" class="btn btn-primary">Updates</a>
               <a href="/AdmindeleteProduct/<%= element.Id %>" class="btn btn-primary">Delete</a>  
@@ -51,6 +52,10 @@
                 <div class="mb-3">
                   <label for="ProductPrice" class="form-label">Price</label>
                   <input required name="ProductPrice" type="number" class="form-control" id="ProductPrice">
+                </div>
+                <div class="mb-3">
+                  <label for="ProductQuantity" class="form-label">Quanity</label>
+                  <input required name="Quantity" type="number" class="form-control" id="ProductPrice">
                 </div>
                 <div class="mb-3">
                   <label for="ProductDescription" class="form-label">Description</label>

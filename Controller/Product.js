@@ -44,6 +44,7 @@ const upload = multer({
   }),
 });
 
+
 router.get("/", CheckUserLogin, productView);
 router.get("/Product/:page", CheckUserLogin, PageView);
 router.get("/CheckCart", CheckUserLogin, OpenCart);
@@ -54,6 +55,7 @@ router.get("/ConfirmPage", CheckUserLogin, ConfirmPage);
 router.post("/ConfirmPage", CheckUserLogin, ConfirmPagePost);
 router.get("/checkOrder/:page", CheckUserLogin, Order);
 router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
+router.get('/CancelOrder/:id',CheckUserLogin,CancelOrder);
 
 //Admin Routes
 router.post(
@@ -62,6 +64,7 @@ router.post(
   upload.single("product-image"),
   AddProduct
 );
+
 router.get("/Admin", AdminRole, AdminView);
 router.get("/AdminGetById/:id", AdminRole, AdminGetById);
 router.post("/AdminUpdateProduct", AdminRole, UpdateProduct);
@@ -216,13 +219,14 @@ function AddProduct(req, res) {
       url == "" ||
       req.body.ProductName == "" ||
       req.body.ProductPrice == "" ||
-      req.body.ProductDescription == ""
+      req.body.ProductDescription == "" ||
+      req.body.Quantity==0
     ) {
       res.render("Admin/homePage.ejs", {
         products: [],
         username: req.session.userName,
         message:
-          "File,Name or ProductName ,ProductDescription is required filed",
+          "File,Name or ProductName ,ProductDescription or Quantity is required filed",
       });
     } else {
       req.body.url = url;
@@ -233,6 +237,7 @@ function AddProduct(req, res) {
           res.redirect("/Admin");
         })
         .catch((error) => {
+          console.log(error)
           res.render("Admin/homePage.ejs", {
             products: [],
             username: req.session.userName,
@@ -254,7 +259,7 @@ function OpenBucket(req, res) {
     const UserId = req.session.userId;
     SqlproductService.OpenBucketAdmin(UserId, page)
       .then((data) => {
-        console.log(data);
+        console.log(data)
         res.render("Admin/Bucket.ejs", {
           Orders: data.data,
           message: "",
@@ -317,6 +322,7 @@ function TransactionHistory(req, res) {
     const UserId = req.session.userId;
     SqlproductService.GetAllTrans(UserId)
       .then((data) => {
+        console.log(data)
         res.render("Admin/Trans.ejs", {
           Transaction: data,
           message: "",
@@ -338,14 +344,12 @@ function TransactionHistory(req, res) {
   }
 }
 
-//Update the order  status with date and transaction
+
+//Update the order status with date and transaction
 function UpdateOrderStatus(req, res) {
   try {
     let orderId = req.params.orderId;
     const UserId = req.session.userId;
-    console.log(orderId);
-    console.log(req.body);
-
     SqlproductService.UpdateOrders(orderId, UserId, req.body)
       .then((data) => {
         SqlproductService.GetBucketOrderById(orderId, UserId).then((data) => {
@@ -361,6 +365,8 @@ function UpdateOrderStatus(req, res) {
     res.render("Error/error.ejs");
   }
 }
+
+
 //-----------------------------------------------//
 /*
 function GetById(req,res){
@@ -589,7 +595,6 @@ function ConfirmPagePost(req, res) {
         username: req.session.userName,
       });
     } else {
-      console.log(req.body);
       SqlproductService.ConfirmOrder(userId, req.body).then((data) => {
         res.redirect("/checkOrder/1");
       });
@@ -633,5 +638,23 @@ function Order(req, res) {
     res.render("Error/error.ejs");
   }
 }
+
+
+function CancelOrder(req,res){
+  try {
+    let OrderId = req.params.id;
+    const UserId = req.session.userId;
+    SqlproductService.CancelOrder(OrderId,UserId)
+     .then((data)=>{
+      console.log(data);
+      res.redirect('/checkOrder/1');
+     })
+
+  } catch (error) {
+    console.log(error);
+    res.render("Error/error.ejs");
+  }
+}
+
 
 module.exports = router;

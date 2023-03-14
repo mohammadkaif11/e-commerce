@@ -15,7 +15,9 @@
     <%- include("../partials/header.ejs",{isAuth:true}); %>
     <div class="container mx-2 my-2">
       <div class="orderContainer">
-        <h3 class="display-5" style="text-align: center">Your Bucket Products</h3>
+        <h3 class="display-5" style="text-align: center">
+          Your Bucket Products
+        </h3>
         <hr />
       </div>
     </div>
@@ -24,7 +26,6 @@
       <% if (message.length > 0) { %>
       <div class="alert alert-danger"><%= message %></div>
       <% } %>
-
       <!--Display Order Products-->
       <section class="mx-2 my-2" style="background-color: #2874f0">
         <% Orders.forEach(function(element ,index) { %>
@@ -128,55 +129,144 @@
                   </div>
                 </div>
               </div>
+
               <div style="background-color: white" class="card mb-4">
                 <div class="card-body p-4">
-                  <div class="float-start">
-                    <p class="mb-0 me-5 d-flex align-items-center">
-                      <%if(element.DeliveryDate==null){%>
-                      <span class="small text-muted me-2"
-                        >Delivery Date : Update Status</span
-                      >
-                      <%}else{%>
-                      <span class="small text-muted me-2"
-                        >Delivery Date : <%= element.DeliveryDate %></span
-                      >
-                      <%}%>
-                    </p>
-
-                    <p class="mb-0 me-5 d-flex align-items-center">
-                      <%if(element.Status==null){%>
-                      <span class="small text-muted me-2">Status:Not Updated</span>
-                      <%}else{%>
-                      <span class="small text-muted me-2">Status:Updated</span>
-                      <%}%>
-                    </p>
-                  </div>
-
-                  <div class="float-end">
-                    <p class="mb-0 me-5 d-flex align-items-center">
-                      <%if(element.Status==null){%>
-                      <span class="small text-muted me-2"
-                        >Updated order Status:</span
-                      >
-                      <a
-                        type="button"
-                        class="btn btn-danger lead fw-normal my-2"
-                        href="/updateOrder/<%= element.Id %>"
-                      >
-                        Update
-                      </a>
-                      <%}else{%>
-                      <span class="small text-muted me-2">Updated Order:</span>
-                      <a
-                        type="button"
-                        class="btn btn-success lead fw-normal my-2"
-                        href="/updateOrder/<%= element.Id %>"
-                      >
-                        Status already update
-                      </a>
-                      <%}%>
-                    </p>
-                  </div>
+                  <%if(element.CustomerCancel!=true){%>
+                    <div class="float-start">
+                      <p class="mb-0 me-5 d-flex align-items-center">
+                        <%if(element.DeliveryDate==null){%>
+                        <%if(element.IsCancel!=null){%>
+                        <%if(element.IsCancel==true){%>
+                        <span
+                          class="small my-1 me-2"
+                          style="
+                            background-color: red;
+                            color: white;
+                            padding: 15px;
+                          "
+                          >Order Cancel By Seller</span
+                        >
+                        <%}else{%>
+                        <span
+                          class="small my-1 me-2"
+                          style="
+                            background-color: red;
+                            color: white;
+                            padding: 15px;
+                          "
+                          >Wait</span
+                        >
+                        <%}%> <%}else{%>
+                        <span
+                          class="small my-1 me-2"
+                          style="
+                            background-color: green;
+                            color: white;
+                            padding: 15px;
+                          "
+                          >Status is Not updated yet</span
+                        >
+                        <%}%> <%}else{%>
+                        <span
+                          class="small my-1 me-2"
+                          style="
+                            background-color: green;
+                            color: white;
+                            padding: 15px;
+                          "
+                          >Delivery Date : <%= element.DeliveryDate %></span
+                        >
+                        <%}%>
+                      </p>
+                      <p class="mb-0 me-5 d-flex align-items-center">
+                        <%if(element.Status==null){%>
+                        <span
+                          class="small me-2 my-1"
+                          style="
+                            background-color: red;
+                            color: white;
+                            padding: 15px;
+                          "
+                          >Status:Not Updated</span
+                        >
+                        <%}else{%>
+                        <span
+                          class="small me-2 my-1"
+                          style="
+                            background-color: green;
+                            color: white;
+                            padding: 15px;
+                          "
+                          >Status:Updated</span
+                        >
+                        <%}%>
+                      </p>
+                    </div>
+  
+                    <div class="float-end">
+                      <p class="mb-0 me-5 d-flex align-items-center">
+                        <%if(element.Status==null){%>
+                        <span class="small text-muted me-2"
+                          >Updated order Status:</span
+                        >
+                        <a
+                          type="button"
+                          class="btn btn-danger lead fw-normal my-2"
+                          href="/updateOrder/<%= element.Id %>"
+                        >
+                          Update
+                        </a>
+                        <%}else if(element.CustomerCancel!=true){%>
+                        <span class="small text-muted me-2">Updated Order:</span>
+                        <a
+                          type="button"
+                          class="btn btn-success lead fw-normal my-2"
+                          href="/updateOrder/<%= element.Id %>"
+                        >
+                          Status already update
+                        </a>
+                        <%}else{%>
+                          <span class="small text-muted me-2">Order Status</span>
+                          <a
+                            type="button"
+                            class="btn btn-danger lead fw-normal my-2"
+                          >
+                            Customer cancel Order
+                          </a>
+                        <%}%>
+                      </p>
+                    </div>
+                  <% }else {%>
+                    <div class="float-start">                     
+                      <p class="mb-0 me-5 d-flex align-items-center">
+                        <span
+                          class="small me-2 my-1"
+                          style="
+                            background-color: red;
+                            color: white;
+                            padding: 15px;
+                          "
+                          >Customer CancelOrder</span
+                        >
+                      </p>
+                    </div>
+                    <div class="float-end">
+                      <p class="mb-0 me-5 d-flex align-items-center">
+                        <span class="small text-muted me-2"
+                          > order Status:</span
+                        >
+                        <a
+                          type="button"
+                          class="btn btn-danger lead fw-normal my-2"
+                          href="#"
+                        >
+                          Cancel
+                        </a>
+            
+                      </p>
+                    </div>
+                   <%}%>
                 </div>
               </div>
             </div>
@@ -186,6 +276,7 @@
         <% }); %>
       </section>
     </div>
+          <!--page navbar-->
     <nav
       style="display: flex; align-items: center; justify-content: center"
       aria-label="Page navigation example"
