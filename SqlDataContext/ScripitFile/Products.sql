@@ -6,5 +6,5 @@ create Table Products(
     ProductDescription varchar(max),
 	 ImageUrl varchar(max),
       Quantity int,
-      [Key] varchar(max),
+      [ImageKey] varchar(max),
 	 );
