@@ -5,5 +5,6 @@ create Table Products(
     ProductPrice decimal,
     ProductDescription varchar(max),
 	 ImageUrl varchar(max),
-      Quantity int 
+      Quantity int,
+      [Key] varchar(max),
 	 );
