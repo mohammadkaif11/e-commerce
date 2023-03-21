@@ -1,6 +1,5 @@
 create Table Cart(
-    Id int primary key identity ,
-    ProductId int ,
+    Id int primary key identity(1,1) ,
+    CartProducts varchar(Max),
 	UserId int,
-    AdminId int
 );

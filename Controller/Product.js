@@ -259,6 +259,10 @@ function OpenBucket(req, res) {
   try {
     let page = req.params.page;
     const UserId = req.session.userId;
+
+    SqlproductService.new_OpenBucketAdmin(UserId).then((data)=>{
+      console.log(data)
+    })
     SqlproductService.OpenBucketAdmin(UserId, page)
       .then((data) => {
         res.render("Admin/Bucket.ejs", {
@@ -499,9 +503,11 @@ function AddCart(req, res) {
     const AdminId = req.query.adminId;
     SqlproductService.AddtoCart(productId, userId, AdminId)
       .then((response) => {
+        console.log("Check success");
         res.redirect("/CheckCart");
       })
       .catch((error) => {
+        console.log(error)
         res.render("Cart/Cart.ejs", {
           Cart: [],
           message: "some error try again",

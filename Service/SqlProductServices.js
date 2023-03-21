@@ -88,10 +88,10 @@ async function DeleteProduct(id, UserId) {
 
 //SQL GET OpenBucket for Admin
 async function OpenBucketAdmin(AdminId, page_number) {
+  const page_size = 5;
   let OrderArray = [];
   let OrderProductArray = [];
   let ProductArray = [];
-  const page_size = 5;
 
   const pool = await ConenctedToSql();
 
@@ -150,11 +150,34 @@ async function OpenBucketAdmin(AdminId, page_number) {
 
   var lengthOfOrder = responsObj.length;
   const BucketObject = {
-    data: responsObj.slice((page_number - 1) * page_size,page_number * page_size),
+    data: responsObj.slice(
+      (page_number - 1) * page_size,
+      page_number * page_size
+    ),
     current: parseInt(page_number),
     pages: Math.ceil(lengthOfOrder / page_size),
   };
   return BucketObject;
+}
+
+async function new_OpenBucketAdmin(AdminId) {
+  const pool = await ConenctedToSql();
+  const response = await pool
+    .request()
+    .input("AdminId", sql.Int, AdminId)
+    .execute("sp_GetBucket_Admin");
+
+  let TotalAmount = 0;
+  let OrderId = -1;
+
+  for (let i = 0; i < response.recordset.length; i++) {
+    if (response.recordset[i].ID == OrderId || OrderId == -1) {
+      TotalAmount += response.recordset[i].Quantity * ProductPrice;
+    } else {
+      response.recordset[i - 1].TotalAmount = TotalAmount;
+    }
+  }
+  console.log("new Open Bucket Service", response.recordset);
 }
 
 //SQL GET bucket order by Id
@@ -442,13 +465,49 @@ async function GetProductById(productId) {
 //add to cart By User Done
 async function AddtoCart(productId, user_id, adminId) {
   const pool = await ConenctedToSql();
-  const response = await pool
+  let UserCartExist = await pool
     .request()
-    .input("productId", sql.Int, productId)
     .input("userId", sql.Int, user_id)
-    .input("adminId", sql.Int, adminId)
-    .query(querys.ADDCART);
-  return response.rowsAffected[0];
+    .query(querys.CECKUSERINCART);
+  console.log("UserCartExist", UserCartExist.recordset);
+  if (UserCartExist.recordset.length > 0) {
+    let ProductCarts = UserCartExist.recordset[0].CartProducts;
+    let ObjArray = JSON.parse(ProductCarts);
+    let ProductAlreadyExist = ObjArray.find(function (product) {
+      if (product.ProductId == productId) {
+        return product;
+      }
+    });
+    if (ProductAlreadyExist) {
+      return 1;
+    }
+    let obj = {
+      ProductId: productId,
+      AdminId: adminId,
+    };
+    ObjArray.push(obj);
+    let data = JSON.stringify(ObjArray);
+    const response = await pool
+      .request()
+      .input("cartProducts", sql.VarChar, data)
+      .input("userId", sql.Int, user_id)
+      .query(querys.UPDATECART);
+    return response.rowsAffected[0];
+  } else {
+    let ObjArray = [];
+    let obj = {
+      ProductId: productId,
+      AdminId: adminId,
+    };
+    ObjArray.push(obj);
+    let data = JSON.stringify(ObjArray);
+    const response = await pool
+      .request()
+      .input("cartProducts", sql.VarChar, data)
+      .input("userId", sql.Int, user_id)
+      .query(querys.ADDCART);
+    return response.rowsAffected[0];
+  }
 }
 
 //GetAllCart by User Done
@@ -462,10 +521,10 @@ async function GetAllCart(user_id) {
     .input("userId", sql.Int, user_id)
     .query(querys.GETCART);
 
-  console.log(products);
-  console.log(cart);
+  let CartsProducts=JSON.parse(cart.recordset[0].CartProducts);
+  cart.recordset[0].CartProducts=CartsProducts;
 
-  cart.recordset.forEach((cartObj) => {
+  cart.recordset[0].CartProducts.forEach((cartObj) => {
     var product = products.recordset.find((productObj) => {
       if (cartObj.ProductId == productObj.Id) {
         return productObj;
@@ -481,7 +540,7 @@ async function GetAllCart(user_id) {
       responsObj.push(cartObj);
     }
   });
-  console.log(responsObj);
+
   return responsObj;
 }
 
@@ -489,12 +548,26 @@ async function GetAllCart(user_id) {
 async function RemoveCart(productId, userId) {
   console.log(productId, userId);
   const pool = await ConenctedToSql();
-  const response = await pool
+  const cart = await pool
     .request()
-    .input("productId", sql.Int, productId)
     .input("userId", sql.Int, userId)
-    .query(querys.DELETECART);
-  return response.rowsAffected[0];
+    .query(querys.GETCART);
+  let CartsObj=[];
+  let CartsProducts=JSON.parse(cart.recordset[0].CartProducts); 
+
+  CartsProducts.forEach(function(product) {
+    if(product.ProductId!=productId) {
+      CartsObj.push(product);
+    }
+  })
+
+  let data=JSON.stringify(CartsObj);
+  const response = await pool
+  .request()
+  .input("cartProducts", sql.VarChar, data)
+  .input("userId", sql.Int, userId)
+  .query(querys.UPDATECART);
+return response.rowsAffected[0];
 }
 
 //PLACE ORDER
@@ -560,9 +633,7 @@ async function ConfirmOrder(userId, obj) {
       .input("date", sql.Date, datetime)
       .input("modePayment", sql.VarChar, obj.modeOfPayment)
       .query(querys.ADDORDER);
-    const LastOrder = await pool
-      .request()
-      .query(querys.GETLASTORDER);
+    const LastOrder = await pool.request().query(querys.GETLASTORDER);
     const LastOrderId = LastOrder.recordset[LastOrder.recordset.length - 1].Id;
     for (var i = 0; i < obj.ProductId.length; i++) {
       const saveProducts = await pool
@@ -828,4 +899,5 @@ module.exports = {
   UpdateOrders,
   GetAllTrans,
   CancelOrder,
+  new_OpenBucketAdmin,
 };
