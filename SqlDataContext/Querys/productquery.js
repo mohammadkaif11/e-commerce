@@ -13,7 +13,7 @@ const querys = {
     PLACEORDER:"DELETE FROM [ECM].[dbo].[Cart] WHERE  UserId=@userId;",
     COUNT:"SELECT count(*) as Totalproducts FROM products",
     ADDORDER:"INSERT INTO [ECM].[dbo].[Orders] (UserId,Date,Address,Pincode,ModePayment,CustomerCancel) VALUES (@userId,@date,@address,@pincode,@modePayment,0)",
-    GETLASTORDER:"SELECT * FROM [ECM].[dbo].[Orders] WHERE UserId=@userId",
+    GETLASTORDER:"SELECT * FROM [ECM].[dbo].[Orders]",
     ADDORDERPRODUCTS:"INSERT INTO [ECM].[dbo].[OrderProducts] (OrderId,ProductId,AdminId,Quantity) VALUES (@orderId,@productId,@adminId,@quantity)",
     GETORDER:"SELECT * FROM [ECM].[dbo].[Orders] WHERE UserId=@userId",
     GETORDERPRODUCTS:"SELECT * FROM [ECM].[dbo].[OrderProducts]",

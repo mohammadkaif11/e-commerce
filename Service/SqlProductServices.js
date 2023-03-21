@@ -562,7 +562,6 @@ async function ConfirmOrder(userId, obj) {
       .query(querys.ADDORDER);
     const LastOrder = await pool
       .request()
-      .input("userId", sql.Int, userId)
       .query(querys.GETLASTORDER);
     const LastOrderId = LastOrder.recordset[LastOrder.recordset.length - 1].Id;
     for (var i = 0; i < obj.ProductId.length; i++) {
@@ -574,6 +573,7 @@ async function ConfirmOrder(userId, obj) {
         .input("quantity", sql.Int, obj.ProductQuantity[i])
         .query(querys.ADDORDERPRODUCTS);
     }
+
     PlacedOrder(userId).then((Data) => {
       return true;
     });
