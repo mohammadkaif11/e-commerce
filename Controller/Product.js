@@ -23,6 +23,7 @@ const s3 = new aws.S3({
   Bucket: BUCKET_NAME,
 });
 
+
 //using Local folders uploads
 // const upload = multer({ dest: "uploads/" });
 //upload middleware
@@ -72,7 +73,8 @@ router.get("/AdmindeleteProduct/:id", AdminRole, DeleteAdmin);
 router.get("/bucket/:page", AdminRole, OpenBucket);
 router.get("/updateOrder/:orderId", AdminRole, GetOrderbyId);
 router.post("/updateOrder/:orderId", AdminRole, UpdateOrderStatus);
-router.get("/transactionhistory", AdminRole, TransactionHistory);
+router.get("/transactionhistory/:page", AdminRole, TransactionHistory);
+
 
 //Admin User Get all Product
 async function PageView(req, res) {
@@ -318,23 +320,36 @@ function GetOrderbyId(req, res) {
 //Transaction history
 function TransactionHistory(req, res) {
   try {
+    const page=req.params.page;
     const UserId = req.session.userId;
-    SqlproductService.GetAllTrans(UserId)
+    const CustomerCancel = req.query.CustomerCancel||"";
+    const OrderDate=req.query.OrderDate || "";
+    const YourCancel=req.query.YourCancel || "";
+    SqlproductService.GetAllTrans(UserId,OrderDate, CustomerCancel, YourCancel,page)
       .then((data) => {
-        console.log(data)
         res.render("Admin/Trans.ejs", {
-          Transaction: data,
+          Transaction: data.ResponseData,
           message: "",
           username: req.session.userName,
           role: req.session.role,
+          current:data.current,
+          pages:data.pages,
+          OrderDate:OrderDate,
+          CustomerCancel:CustomerCancel,
+          YourCancel:YourCancel
         });
       })
       .catch((error) => {
         res.render("Admin/Trans.ejs", {
           Transaction: [],
-          message: "",
+          message: "Some Error occurred",
           username: req.session.userName,
           role: req.session.role,
+          current:data.current,
+          pages:data.pages,
+          OrderDate:OrderDate,
+          CustomerCancel:CustomerCancel,
+          YourCancel:YourCancel
         });
       });
   } catch (error) {
@@ -342,7 +357,6 @@ function TransactionHistory(req, res) {
     res.render("Error/error.ejs");
   }
 }
-
 
 //Update the order status with date and transaction
 function UpdateOrderStatus(req, res) {
@@ -364,7 +378,6 @@ function UpdateOrderStatus(req, res) {
     res.render("Error/error.ejs");
   }
 }
-
 
 //-----------------------------------------------//
 /*
@@ -638,7 +651,7 @@ function Order(req, res) {
   }
 }
 
-
+//Cancel the Order
 function CancelOrder(req,res){
   try {
     let OrderId = req.params.id;
@@ -654,6 +667,7 @@ function CancelOrder(req,res){
     res.render("Error/error.ejs");
   }
 }
+
 
 
 module.exports = router;

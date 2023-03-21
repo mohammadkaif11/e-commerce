@@ -151,10 +151,7 @@ async function OpenBucketAdmin(AdminId, page_number) {
 
   var lengthOfOrder = responsObj.length;
   const BucketObject = {
-    data: responsObj.slice(
-      (page_number - 1) * page_size,
-      page_number * page_size
-    ),
+    data: responsObj.slice((page_number - 1) * page_size,page_number * page_size),
     current: parseInt(page_number),
     pages: Math.ceil(lengthOfOrder / page_size),
   };
@@ -356,24 +353,72 @@ async function UpdateOrders(orderId, adminId, data) {
   }
 }
 
-
 //Get Transaction
-async function GetAllTrans(adminId) {
-  const pool = await ConenctedToSql();
-  const response = await pool
-    .request()
-    .input("adminId", sql.Int, adminId)
-    .query(querys.GETTRANS);
+async function GetAllTrans(
+  adminId,
+  orderDate,
+  customerCancel,
+  sellerCancel,
+  PageNo
+) {
+  try {
+    let pageno = PageNo;
+    let pagesize = 10;
+    let OrderDate = null;
+    let CustomerCancel = null;
+    let SellerCancel = null;
 
-  const transaction = response.recordset;
-  transaction.sort(function (a, b) {
-    return b.OrderId - a.OrderId;
-  });
+    if (orderDate != undefined && orderDate.length > 0) {
+      OrderDate = orderDate;
+      console.log("Order Date: " + OrderDate);
+    }
+    if (customerCancel.length > 0) {
+      CustomerCancel = 1;
+    }
+    if (sellerCancel.length > 0) {
+      SellerCancel = 1;
+    }
 
-  transaction.forEach(function (element) {
-    element.Date = new Date(element.Date).toDateString();
-  });
-  return transaction;
+    const pool = await ConenctedToSql();
+    const response = await pool
+      .request()
+      .input("AdminId", sql.Int, adminId)
+      .input("CustomerCancel", sql.Bit, CustomerCancel)
+      .input("SellerCancel", sql.Bit, SellerCancel)
+      .input("DeliveryDate", sql.Date, OrderDate)
+      .input("Page", sql.Int, pageno)
+      .input("Size", sql.Int, pagesize)
+      .execute("sp_GetTransaction");
+
+    const TotalTransaction = await pool
+      .request()
+      .query(`select Count(*) as Total from trans where AdminId=${adminId}`);
+    const TotalTransactionNo = TotalTransaction.recordset[0].Total;
+    const transaction = response.recordset;
+
+    //convert date to time
+    transaction.forEach(function (element) {
+      element.Date = new Date(element.Date).toDateString();
+      element.OrderDate = new Date(element.OrderDate).toDateString();
+    });
+
+    //Sending obj
+    const obj = {
+      ResponseData: transaction,
+      current: parseInt(PageNo),
+      pages: Math.ceil(TotalTransactionNo / pagesize),
+    };
+
+    return obj;
+  } catch (error) {
+    console.log(error);
+    const obj = {
+      ResponseData: [],
+      current: 1,
+      pages: 0,
+    };
+    return obj;
+  }
 }
 
 //////////////////////////////////////////...........
@@ -483,7 +528,7 @@ async function GetProductByPagination(page, productName, priceRange, callback) {
   if (priceRange == 0) {
     PriceRange = null;
   }
-  var numPerPage = 4;
+  let numPerPage = 4;
   const pool = await ConenctedToSql();
   const products = await pool
     .request()
@@ -714,7 +759,6 @@ async function CancelOrder(id, userId) {
   return CancelOrder.rowsAffected[0];
 }
 
-
 //Update Product Quantity
 async function UpdateProductQuantity(id, quantity, userId) {
   try {
@@ -731,18 +775,6 @@ async function UpdateProductQuantity(id, quantity, userId) {
     console.log(error);
   }
 }
-
-//Update Product Quantity
-async function UpdateProductQuantityTrans(request,id, quantity, userId) {
-       request()
-      .input("id", sql.Int, id)
-      .input("userId", sql.Int, userId)
-      .input("quantity", sql.Int, quantity)
-      .query(querys.UPDATEPRODUCTQUANTITY);
-
-    return UpdateProduct.rowsAffected[0];
-}
-
 
 //UPdate Product Quantity after Cancel
 async function UpdateProductQuantityAfterCancel(id, quantity, userId) {
