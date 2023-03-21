@@ -5,7 +5,7 @@ create Table Orders(
   [Address] varchar(max),
   [Pincode] varchar(max),
    ModePayment varchar(max),
-    CustomerCancel  bit
+   CustomerCancel  bit
 );
 
 

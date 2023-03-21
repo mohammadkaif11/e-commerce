@@ -4,7 +4,6 @@ const querys = require("../SqlDataContext/Querys/productquery");
 
 //Aws Configuration
 const aws = require("aws-sdk");
-const { resolve } = require("path");
 const ID = process.env.AWS_ID;
 const SECRET = process.env.AWS_SECRET;
 const BUCKET_NAME = process.env.BACKET_NAME;
