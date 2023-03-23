@@ -4,32 +4,20 @@ create Table Orders(
   [Date] date,
   [Address] varchar(max),
   [Pincode] varchar(max),
-   ModePayment varchar(max),
-   CustomerCancel  bit
+  ModePayment varchar(max),
+  CustomerCancel  bit,
+  IsOrderSuccess bit
 );
-
 
 create Table OrderProducts(
     Id int primary key identity(1,1),
 	OrderId int,
-	ProductId int,
+	OrderProducts varchar(max),
     AdminId int,
-	Quantity int,
+	TotalAmount decimal,
+	TotalItemQuantity int,
 	[Status] bit,
 	DeliveryDate date,
     [Message] varchar(max),
     IsCancel Bit
-);
-
-
- create table Trans(
-Id  int primary key identity(1,1),
-AdminId int,
-OrderId int,
-TotalAmount decimal,
-PaymentMode varchar(max),
-[Message] varchar(max),
-IsCancel Bit,
-[Date] date,
-CustomerCancel Bit
 );
