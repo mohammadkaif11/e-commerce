@@ -118,7 +118,7 @@
                       >
                     </div>
                   </div>
-                  <%if(element.IsAllStatusUpdate==true && productObj.Status==true && productObj.IsCancel==true){%>
+                  <%if(element.CustomerCancel!=true && element.IsAllStatusUpdate==true && productObj.Status==true && productObj.IsCancel==true){%>
                     <div class="col-md-2 d-flex justify-content-center">
                       <div>
                          <span style="color: red;">Cancel Product</span>
