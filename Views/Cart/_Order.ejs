@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OrderPage</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <%- include("../partials/header.ejs",{isAuth:true}); %>
+    <div class="container mx-2 my-2">
+      <div class="orderContainer">
+        <h3 class="display-5" style="text-align: center">Your Order</h3>
+        <hr />
+      </div>
+    </div>
+    
+    <div class="container">
+      <% if (message.length > 0) { %>
+      <div class="alert alert-danger"><%= message %></div>
+      <% } %>
+
+      <!--Display Order Products-->
+      <section class="mx-2 my-2" style="background-color: #2874f0">
+        <% Orders.forEach(function(element ,index) { %>
+        <div class="container h-100">
+          <div
+            class="row d-flex justify-content-center align-items-center h-100"
+          >
+            <div class="col">
+              <div
+                class="my-2"
+                style="
+                  background-color: white;
+                  border-radius: 10px;
+                  padding: 5px;
+                "
+              >
+                <p>
+                  <span class="h4"> OrderNo-</span
+                  ><span class="h4"><%= element.Id %></span>
+                </p>
+                <p>
+                  <span class="h4"> Address-</span
+                  ><span class="h4"><%= element.Address %></span>
+                </p>
+                <p>
+                  <span class="h4"> Pincode-</span
+                  ><span class="h4"><%= element.Pincode %></span>
+                </p>
+                <p>
+                  <span class="h4"> OrderDate-</span
+                  ><span class="h4"><%= element.Date %></span>
+                </p>
+              </div>
+              <% element.OrderProducts.forEach(function(product) { %>
+              <div style="background-color: white" class="card mb-4">
+                <div class="card-body p-4">
+                  <div class="row align-items-center">
+                    <div class="col-md-2">
+                      <img
+                        src="<%=product.ImageUrl%>"
+                        class="img-fluid"
+                        alt="Generic placeholder image"
+                      />
+                    </div>
+                    <div class="col-md-2 d-flex justify-content-center">
+                      <div>
+                        <p class="mb-4 pb-2">Name</p>
+                        <p class="lead fw-normal mb-0">
+                          <%= product.ProductName %>
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col-md-2 d-flex justify-content-center">
+                      <div>
+                        <p class="mb-4 pb-2">Quantity</p>
+                        <p class="lead fw-normal mb-0">
+                          <%= product.Quantity %>
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col-md-2 d-flex justify-content-center">
+                      <div>
+                        <p class="mb-4 pb-2">Price</p>
+                        <p class="lead fw-normal mb-0">
+                          <%= product.ProductPrice %>
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col-md-2 d-flex justify-content-center">
+                      <div>
+                        <p class="mb-4 pb-2">Total</p>
+                        <p class="lead fw-normal mb-0">
+                          $<%= product.ProductTotal %>
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col-md-2 d-flex justify-content-center">
+                      <div>
+                        <p class="mb-4 pb-2">Details</p>
+                        <a
+                          type="button"
+                          href="/GetById/<%= product.ProductId %>"
+                          class="btn btn-primary btn-lg"
+                          >See Details</a
+                        >
+                      </div>
+                    </div>
+                    <%if(element.AllCancel!=true && element.AllPass!=true && element.Status==true  && product.IsCancel==true){%>
+                      <div class="col-md-2 d-flex justify-content-center">
+                        <div>
+                           <span style="color: red;">Cancel Product</span>
+                        </div>
+                      </div>
+                    <% }%>
+                  </div>
+                </div>
+              </div>
+              
+              <% }); %>
+              <div style="background-color: white" class="card mb-5">
+                <div class="card-body p-4">
+                  <% if(element.CustomerCancel!=true){%>
+                    <div class="float-start">
+                      <p class="mb-0 me-5 d-flex align-items-center">
+                        <a type="button" class="btn btn-danger" href="/CancelOrder/<%= element.Id %>">Cancel Order</a>
+                      </p>
+                    </div>
+                    <%}else{%>
+                      <div class="float-start">
+                        <p class="mb-0 me-5 d-flex align-items-center">
+                          <span style="background-color: red;color: white;padding: 15px;">Your Order Have Cancel</span>
+                        </p>
+                        </div>
+                     <%}%>
+                     
+                  <div class="float-end">
+                    <p class="mb-0 me-5 d-flex align-items-center">
+                      <span class="me-2">Order total:</span>
+                      <span class="lead fw-normal"
+                        ><%= element.TotalAmount %></span
+                      >
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div style="background-color: white" class="card mb-5">
+                <div class="card-body p-4">
+                  <div class="float-start">
+                    <p class="mb-0 me-5 d-flex align-items-center">
+                      <%if(element.Status!=false && element.DeliveryDate!=null &&  element.AllCancel==false && element.CustomerCancel!=true){%>
+                        <span class="small  me-2" style="padding:15px;background-color: green; color: white;">Delivery Date : <%= element.DeliveryDate %></span
+                      >
+                      <% } else if(element.Status!=false && element.DeliveryDate==null && element.AllCancel==true && element.CustomerCancel!=true){%>
+                        <span class="small  me-2" style="padding:15px;background-color: red;color: white;">Your Order Is Cancel Due to some Reason</span>
+                      <%}else if(element.CustomerCancel!=true){%>
+                        <span class="small  me-2" style="padding:15px;background-color: red;color: white;">Your Order Is not Update</span>
+                      <%}%>
+                    </p>
+                    </p>
+                  </div>
+                  <div class="float-end">
+                    <p class="mb-0 me-5 d-flex align-items-center">
+                      <%if(element.AllCancel==true && element.CustomerCancel!=true){%>
+                        <p class="mb-0 me-5 d-flex align-items-center">
+                          <span class="me-2">Order Status:</span>
+                          <span
+                            class="lead fw-normal my-2"
+                            style="
+                              background-color: red;
+                              border: 2px solid redd;
+                              border-radius: 15px;
+                              padding: 4px;
+                            "
+                            >Order Cancel by Seller</span
+                          >
+                        </p>
+                      <%}else if(element.Status==false && element.CustomerCancel!=true){%>
+                        <p class="mb-0 me-5 d-flex align-items-center">
+                          <span class="me-2">Order Status:</span>
+                          <span
+                            class="lead fw-normal my-2"
+                            style="
+                              background-color: red;
+                              border: 2px solid redd;
+                              border-radius: 15px;
+                              padding: 4px;
+                            "
+                            >Seller updated soon</span
+                          >
+                        </p>
+                      <%}else if(element.CustomerCancel!=true){%>
+                        <p class="mb-0 me-5 d-flex align-items-center">
+                          <span class="me-2">Order Status:</span>
+                          <span
+                            class="lead fw-normal my-2"
+                            style="
+                              background-color: green;
+                              border: 2px solid green;
+                              border-radius: 15px;
+                              padding: 4px;
+                            "
+                            >Approved By Seller</span
+                          >
+                        </p>
+                      <%} else {%>
+                        <p class="mb-0 me-5 d-flex align-items-center">
+                          <span class="me-2">Order Status:</span>
+                          <span
+                            class="lead fw-normal my-2"
+                            style="
+                              background-color: red;
+                              border: 2px solid red;
+                              border-radius: 15px;
+                              padding: 4px;
+                            "
+                            >Your Order Cancel</span
+                          >
+                        </p>
+                      <%}%>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <hr />
+        <% }); %>
+      </section>
+    </div>
+
+    <nav style="display: flex; align-items: center;justify-content: center;" aria-label="Page navigation example">
+      <ul class="pagination">
+        <% for(var i=1;i<=pages;i++) {%>
+          <% if(i==current){ %>
+            <li class="page-item  active" ><a class="page-link" href="/checkOrder/<%=i%>"><%=i%></a></li>
+            <% } else{ %>  
+              <li class="page-item"><a class="page-link" href="/checkOrder/<%=i%>"><%=i%></a></li>
+              <% } %>
+        <% }; %>
+      </ul>
+    </nav>
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
+<style></style>

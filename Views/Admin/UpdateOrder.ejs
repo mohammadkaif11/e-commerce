@@ -15,7 +15,9 @@
     <%- include("../partials/header.ejs",{isAuth:true}); %>
     <div class="container mx-2 my-2">
       <div class="orderContainer">
-        <h3 class="display-5" style="text-align: center">Your Bucket Product</h3>
+        <h3 class="display-5" style="text-align: center">
+          Your Bucket Product
+        </h3>
         <hr />
       </div>
     </div>
@@ -43,7 +45,7 @@
               >
                 <p>
                   <span class="h4"> OrderNo-</span
-                  ><span class="h4"><%= element.Id %></span>
+                  ><span class="h4"><%= element.OrderId %></span>
                 </p>
                 <p>
                   <span class="h4"> Address-</span
@@ -88,16 +90,14 @@
                     <div class="col-md-2 d-flex justify-content-center">
                       <div>
                         <p class="small text-muted mb-4 pb-2">Price</p>
-                        <p class="lead fw-normal mb-0">
-                          <%= element.ProductPrice %>
-                        </p>
+                        <p class="lead fw-normal mb-0"><%= element.Price %></p>
                       </div>
                     </div>
                     <div class="col-md-2 d-flex justify-content-center">
                       <div>
                         <p class="small text-muted mb-4 pb-2">Total</p>
                         <p class="lead fw-normal mb-0">
-                          $<%= element.ProductTotal %>
+                          $<%= element.TotalPrice %>
                         </p>
                       </div>
                     </div>
@@ -139,7 +139,7 @@
 
     <div class="container">
       <form
-        action="/updateOrder/<%= Orders[0].Id %>"
+        action="/updateOrder/<%= Orders[0].OrderId%>"
         method="post"
         class="mx-3 my-3"
         style="border: #2874f0 3px solid; padding: 30px"
@@ -166,7 +166,7 @@
             disabled
             required
           />
-        </div>       
+        </div>
         <div class="mb-3">
           <label for="transaction" class="form-label">Message</label>
           <input
@@ -178,12 +178,18 @@
           />
         </div>
         <div class="mb-3">
-          <input class="form-check-input" name="CancelOrder" type="checkbox" value=true id="flexCheckDefault">
+          <input
+            class="form-check-input"
+            name="CancelOrder"
+            type="checkbox"
+            value="true"
+            id="flexCheckDefault"
+          />
           <label class="form-check-label" for="flexCheckDefault">
             Cancel Order
           </label>
         </div>
-        <button   type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary">Submit</button>
       </form>
     </div>
     <script

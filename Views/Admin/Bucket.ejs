@@ -23,260 +23,97 @@
     </div>
 
     <div class="container">
-      <% if (message.length > 0) { %>
-      <div class="alert alert-danger"><%= message %></div>
-      <% } %>
-      <!--Display Order Products-->
-      <section class="mx-2 my-2" style="background-color: #2874f0">
-        <% Orders.forEach(function(element ,index) { %>
-        <div class="container h-100">
-          <div
-            class="row d-flex justify-content-center align-items-center h-100"
-          >
-            <div class="col">
-              <div
-                class="my-2"
-                style="
-                  background-color: white;
-                  border-radius: 10px;
-                  padding: 5px;
-                "
+      <table
+        id="dtBasicExample"
+        class="table table-striped table-bordered table-sm"
+        cellspacing="0"
+        width="100%"
+      >
+        <form>
+          <thead>
+            <tr>
+              <th class="th-sm">OrderDate</th>
+              <th class="th-sm">CustomerCancel</th>
+              <th class="th-sm">Pending</th>
+              <th class="th-sm">Submit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="date" name="OrderDate" /></td>
+              <td><input type="checkbox" value="1" name="CustomerCancel" /></td>
+              <td><input type="checkbox" value="1" name="YourCancel" /></td>
+              <td>
+                <button type="submit" class="btn btn-dark">Submit</button>
+              </td>
+            </tr>
+          </tbody>
+        </form>
+      </table>
+      <table
+        id="dtBasicExample"
+        class="table table-striped table-bordered table-sm"
+        cellspacing="0"
+        width="100%"
+      >
+        <thead>
+          <tr>
+            <th class="th-sm">Sno</th>
+            <th class="th-sm">Order Id</th>
+            <th class="th-sm">Order Date</th>
+            <th class="th-sm">Total ItemQuantity</th>
+            <th class="th-sm">Total Amount</th>
+            <th class="th-sm">Mode of Payment</th>
+            <th class="th-sm">Delivery Date</th>
+            <th class="th-sm">Status</th>
+            <th class="th-sm">CustomerCancel</th>
+            <th class="th-sm">Status Msg</th>
+            <th class="th-sm">Update</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% Orders.forEach(function(element ,index) { %>
+          <tr>
+            <th scope="row"><%= index+1%></th>
+            <td><%= element.OrderId%></td>
+            <td><%= element.Date%></td>
+            <td><%= element.TotalItemQuantity%></td>
+            <td><%= element.TotalAmount%></td>
+            <td>$ <%= element.ModePayment%></td>
+            <% if(element.DeliveryDate==null) { %>
+            <td>$Not Update</td>
+            <%}else{%>
+            <td><%= element.DeliveryDate%></td>
+            <%}%> <% if(element.Status==null) { %>
+            <td>Not Update</td>
+            <%}else{%> <% if(element.Status==true) {%>
+            <td>
+              <input onclick="return false;" readonly type="checkbox" checked />
+            </td>
+            <%} else {%>
+            <td><input onclick="return false;" readonly type="checkbox" /></td>
+            <% }%> <%}%> <% if(element.CustomerCancel==null) { %>
+            <td>Not Update</td>
+            <%}else{%> <% if(element.CustomerCancel==true) {%>
+            <td>
+              <input onclick="return false;" readonly type="checkbox" checked />
+            </td>
+            <%} else {%>
+            <td><input onclick="return false;" readonly type="checkbox" /></td>
+            <% }%> <%}%>
+            <td><%= element.StatusMsg%></td>
+            <td>
+              <a href="/updateOrder/<%= element.OrderId%>" class="btn btn-dark"
+                >Update</a
               >
-                <p>
-                  <span class="h4"> OrderNo-</span
-                  ><span class="h4"><%= element.Id %></span>
-                </p>
-                <p>
-                  <span class="h4"> Address-</span
-                  ><span class="h4"><%= element.Address %></span>
-                </p>
-                <p>
-                  <span class="h4"> Pincode-</span
-                  ><span class="h4"><%= element.Pincode %></span>
-                </p>
-                <p>
-                  <span class="h4"> OrderDate-</span
-                  ><span class="h4"><%= element.Date %></span>
-                </p>
-              </div>
-              <% element.OrderProducts.forEach(function(element) { %>
-              <div style="background-color: white" class="card mb-4">
-                <div class="card-body p-4">
-                  <div class="row align-items-center">
-                    <div class="col-md-2">
-                      <img
-                        src="<%=element.ImageUrl%>"
-                        class="img-fluid"
-                        alt="Generic placeholder image"
-                      />
-                    </div>
-                    <div class="col-md-2 d-flex justify-content-center">
-                      <div>
-                        <p class="small text-muted mb-4 pb-2">Name</p>
-                        <p class="lead fw-normal mb-0">
-                          <%= element.ProductName %>
-                        </p>
-                      </div>
-                    </div>
-                    <div class="col-md-2 d-flex justify-content-center">
-                      <div>
-                        <p class="small text-muted mb-4 pb-2">Quantity</p>
-                        <p class="lead fw-normal mb-0">
-                          <%= element.Quantity %>
-                        </p>
-                      </div>
-                    </div>
-                    <div class="col-md-2 d-flex justify-content-center">
-                      <div>
-                        <p class="small text-muted mb-4 pb-2">Price</p>
-                        <p class="lead fw-normal mb-0">
-                          <%= element.ProductPrice %>
-                        </p>
-                      </div>
-                    </div>
-                    <div class="col-md-2 d-flex justify-content-center">
-                      <div>
-                        <p class="small text-muted mb-4 pb-2">Total</p>
-                        <p class="lead fw-normal mb-0">
-                          $<%= element.ProductTotal %>
-                        </p>
-                      </div>
-                    </div>
-                    <div class="col-md-2 d-flex justify-content-center">
-                      <div>
-                        <p class="small text-muted mb-4 pb-2">Details</p>
-                        <a
-                          type="button"
-                          href="/GetById/<%= element.ProductId %>"
-                          class="btn btn-primary btn-lg"
-                          >See Details</a
-                        >
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <% }); %>
-              <div style="background-color: white" class="card mb-4">
-                <div class="card-body p-4">
-                  <div class="float-end">
-                    <p class="mb-0 me-5 d-flex align-items-center">
-                      <span class="small text-muted me-2">Order total:</span>
-                      <span class="lead fw-normal"
-                        ><%= element.TotalAmount %></span
-                      >
-                    </p>
-                  </div>
-                </div>
-              </div>
+            </td>
 
-              <div style="background-color: white" class="card mb-4">
-                <div class="card-body p-4">
-                  <%if(element.CustomerCancel!=true){%>
-                    <div class="float-start">
-                      <p class="mb-0 me-5 d-flex align-items-center">
-                        <%if(element.DeliveryDate==null){%>
-                        <%if(element.IsCancel!=null){%>
-                        <%if(element.IsCancel==true){%>
-                        <span
-                          class="small my-1 me-2"
-                          style="
-                            background-color: red;
-                            color: white;
-                            padding: 15px;
-                          "
-                          >Order Cancel By Seller</span
-                        >
-                        <%}else{%>
-                        <span
-                          class="small my-1 me-2"
-                          style="
-                            background-color: red;
-                            color: white;
-                            padding: 15px;
-                          "
-                          >Wait</span
-                        >
-                        <%}%> <%}else{%>
-                        <span
-                          class="small my-1 me-2"
-                          style="
-                            background-color: green;
-                            color: white;
-                            padding: 15px;
-                          "
-                          >Status is Not updated yet</span
-                        >
-                        <%}%> <%}else{%>
-                        <span
-                          class="small my-1 me-2"
-                          style="
-                            background-color: green;
-                            color: white;
-                            padding: 15px;
-                          "
-                          >Delivery Date : <%= element.DeliveryDate %></span
-                        >
-                        <%}%>
-                      </p>
-                      <p class="mb-0 me-5 d-flex align-items-center">
-                        <%if(element.Status==null){%>
-                        <span
-                          class="small me-2 my-1"
-                          style="
-                            background-color: red;
-                            color: white;
-                            padding: 15px;
-                          "
-                          >Status:Not Updated</span
-                        >
-                        <%}else{%>
-                        <span
-                          class="small me-2 my-1"
-                          style="
-                            background-color: green;
-                            color: white;
-                            padding: 15px;
-                          "
-                          >Status:Updated</span
-                        >
-                        <%}%>
-                      </p>
-                    </div>
-  
-                    <div class="float-end">
-                      <p class="mb-0 me-5 d-flex align-items-center">
-                        <%if(element.Status==null){%>
-                        <span class="small text-muted me-2"
-                          >Updated order Status:</span
-                        >
-                        <a
-                          type="button"
-                          class="btn btn-danger lead fw-normal my-2"
-                          href="/updateOrder/<%= element.Id %>"
-                        >
-                          Update
-                        </a>
-                        <%}else if(element.CustomerCancel!=true){%>
-                        <span class="small text-muted me-2">Updated Order:</span>
-                        <a
-                          type="button"
-                          class="btn btn-success lead fw-normal my-2"
-                          href="/updateOrder/<%= element.Id %>"
-                        >
-                          Status already update
-                        </a>
-                        <%}else{%>
-                          <span class="small text-muted me-2">Order Status</span>
-                          <a
-                            type="button"
-                            class="btn btn-danger lead fw-normal my-2"
-                          >
-                            Customer cancel Order
-                          </a>
-                        <%}%>
-                      </p>
-                    </div>
-                  <% }else {%>
-                    <div class="float-start">                     
-                      <p class="mb-0 me-5 d-flex align-items-center">
-                        <span
-                          class="small me-2 my-1"
-                          style="
-                            background-color: red;
-                            color: white;
-                            padding: 15px;
-                          "
-                          >Customer CancelOrder</span
-                        >
-                      </p>
-                    </div>
-                    <div class="float-end">
-                      <p class="mb-0 me-5 d-flex align-items-center">
-                        <span class="small text-muted me-2"
-                          > order Status:</span
-                        >
-                        <a
-                          type="button"
-                          class="btn btn-danger lead fw-normal my-2"
-                          href="#"
-                        >
-                          Cancel
-                        </a>
-            
-                      </p>
-                    </div>
-                   <%}%>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <hr />
-        <% }); %>
-      </section>
+            <% }); %>
+          </tr>
+        </tbody>
+      </table>
     </div>
-          <!--page navbar-->
+    <!--page navbar-->
     <nav
       style="display: flex; align-items: center; justify-content: center"
       aria-label="Page navigation example"

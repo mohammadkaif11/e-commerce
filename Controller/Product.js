@@ -259,12 +259,9 @@ function OpenBucket(req, res) {
   try {
     let page = req.params.page;
     const UserId = req.session.userId;
-
-    SqlproductService.new_OpenBucketAdmin(UserId).then((data)=>{
-      console.log(data)
-    })
     SqlproductService.OpenBucketAdmin(UserId, page)
       .then((data) => {
+        console.log(data)
         res.render("Admin/Bucket.ejs", {
           Orders: data.data,
           message: "",
@@ -298,7 +295,6 @@ function GetOrderbyId(req, res) {
     const UserId = req.session.userId;
     SqlproductService.GetBucketOrderById(orderId, UserId)
       .then((data) => {
-        console.log("order data",data)
         res.render("Admin/UpdateOrder.ejs", {
           Orders: data,
           message: "",
@@ -307,7 +303,6 @@ function GetOrderbyId(req, res) {
         });
       })
       .catch((error) => {
-        console.log(error);
         res.render("Admin/UpdateOrder.ejs", {
           Orders: [],
           message: "",
@@ -630,7 +625,7 @@ function Order(req, res) {
     const UserId = req.session.userId;
     SqlproductService.GetOrder(UserId, page)
       .then((data) => {
-        console.log(data);
+        console.log("Order received :",data.Order);
         res.render("Cart/Order.ejs", {
           Orders: data.Order,
           message: "",

@@ -87,7 +87,7 @@ async function DeleteProduct(id, UserId) {
 }
 
 //SQL GET OpenBucket for Admin
-async function OpenBucketAdmin(AdminId, page_number) {
+async function Old_OpenBucketAdmin(AdminId, page_number) {
   const page_size = 5;
   let OrderArray = [];
   let OrderProductArray = [];
@@ -160,229 +160,229 @@ async function OpenBucketAdmin(AdminId, page_number) {
   return BucketObject;
 }
 
-async function new_OpenBucketAdmin(AdminId) {
+//SQL GET OpenBucket for Admin------------------------
+async function OpenBucketAdmin(AdminId, pageNumber) {
+  let pagesize = 10;
   const pool = await ConenctedToSql();
   const response = await pool
     .request()
     .input("AdminId", sql.Int, AdminId)
-    .execute("sp_GetBucket_Admin");
-
-  let TotalAmount = 0;
-  let OrderId = -1;
-
-  for (let i = 0; i < response.recordset.length; i++) {
-    if (response.recordset[i].ID == OrderId || OrderId == -1) {
-      TotalAmount += response.recordset[i].Quantity * ProductPrice;
-    } else {
-      response.recordset[i - 1].TotalAmount = TotalAmount;
+    .input("Page", sql.Int, pageNumber)
+    .input("Size", sql.Int, pagesize)
+    .execute("sp_getAdminBucket");
+  response.recordset.forEach(function (elements) {
+    elements.Date = new Date(elements.Date).toDateString();
+    if (elements.DeliveryDate != null) {
+      elements.DeliveryDate = new Date(elements.DeliveryDate).toDateString();
     }
-  }
-  console.log("new Open Bucket Service", response.recordset);
+    if (elements.Status == null) {
+      elements.StatusMsg = "Pending";
+    } else {
+      if (elements.Status == false) {
+        elements.StatusMsg = "Seller Cancel";
+      } else {
+        elements.StatusMsg = "Seller Update Status";
+      }
+    }
+  });
+  const totalOrderProducts = await pool
+    .request()
+    .input("adminId", sql.Int, AdminId)
+    .query(querys.GETTOTALORDERSPRODUCTSBYADMIN);
+  console.log(totalOrderProducts);
+  let TotalOrderProducts = parseInt(totalOrderProducts.recordset[0].TOTAL);
+
+  const BucketObject = {
+    data: response.recordset,
+    current: parseInt(pageNumber),
+    pages: Math.ceil(TotalOrderProducts / pagesize),
+  };
+  return BucketObject;
 }
 
 //SQL GET bucket order by Id
 async function GetBucketOrderById(orderId, AdminId) {
-  let OrderArray = [];
-  let OrderProductArray = [];
-  let ProductArray = [];
   const pool = await ConenctedToSql();
+  const products = await pool.request().query(querys.GETPRODUCTS);
 
-  //get orders
-  const Orders = await pool.request().query(querys.GETALLORDER);
-
-  //get product
-  const Products = await pool.request().query(querys.GETPRODUCTS);
-
-  //Get Orderproducts
-  const OrdersProdcuts = await pool
-    .request()
-    .input("adminId", sql.Int, AdminId)
-    .query(querys.GETORDERPRODUCTSADMIN);
-
-  OrderArray = Orders.recordset;
-  OrderProductArray = OrdersProdcuts.recordset;
-  ProductArray = Products.recordset;
-
-  var responsObj = [];
-
-  OrderArray.forEach((order) => {
-    const OrderProduct = OrderProductArray.filter((Element) => {
-      if (Element.OrderId == order.Id && Element.OrderId == orderId) {
-        return Element;
-      }
-    });
-
-    if (OrderProduct.length > 0) {
-      let TotalAmount = 0;
-      //All OrderProducts with admin
-      OrderProduct.forEach((orp) => {
-        //get products
-        var product = ProductArray.find(function (element) {
-          if (element.Id == orp.ProductId) {
-            return element;
-          }
-        });
-        orp.ProductName = product.ProductName;
-        orp.ProductPrice = product.ProductPrice;
-        orp.ProductDescription = product.ProductDescription;
-        orp.ImageUrl = product.ImageUrl;
-        orp.ProductTotal = orp.Quantity * product.ProductPrice;
-        TotalAmount = TotalAmount + orp.Quantity * product.ProductPrice;
-      });
-      order.OrderProducts = OrderProduct;
-      order.TotalAmount = TotalAmount;
-      order.Date = new Date(order.Date).toDateString();
-      responsObj.push(order);
-    }
-  });
-
-  return responsObj;
-}
-
-//Update Order
-async function UpdateOrders(orderId, adminId, data) {
-  var datetime = data.date.length > 0 ? new Date(data.date) : null;
-  var IsCancel = data.CancelOrder != undefined ? true : false;
-  const pool = await ConenctedToSql();
-
-  //UpdateOrders
   const response = await pool
     .request()
-    .input("status", sql.Bit, 1)
-    .input("deliveryDate", sql.Date, datetime)
-    .input("orderId", sql.Int, orderId)
-    .input("adminId", sql.Int, adminId)
-    .input("message", sql.VarChar, data.Message)
-    .input("isCancel", sql.Bit, IsCancel)
-    .query(querys.UPDATEORDERS);
+    .input("AdminId", sql.Int, AdminId)
+    .input("OrderId", sql.Int, orderId)
+    .execute("sp_getAdminOrder");
 
-  //Get Order with OrderId
-  const order = await pool
-    .request()
-    .input("orderId", sql.Int, orderId)
-    .query(querys.GETORDERBYID);
+  response.recordset.forEach(function (elements) {
+    elements.Date = new Date(elements.Date).toDateString();
+    let OrderProducts = JSON.parse(elements.OrderProducts);
 
-  //Get OrderProducts with adminId and OrderId
-  const OrderProducts = await pool
-    .request()
-    .input("orderId", sql.Int, orderId)
-    .input("adminId", sql.Int, adminId)
-    .query(querys.GETORDERPRODUCTSBYID);
-
-  //Get all Products
-  const Products = await pool.request().query(querys.GETPRODUCTS);
-
-  //Get Check Transaction Already Exists
-  const Trans = await pool
-    .request()
-    .input("orderId", sql.Int, orderId)
-    .input("adminId", sql.Int, adminId)
-    .query(querys.GETRANSBYCHECK);
-
-  if (Trans.recordset.length > 0) {
-    //Update trans with new Date
-    const currentDate = new Date().toDateString();
-    const updateTrans = await pool
-      .request()
-      .input("orderId", sql.Int, Trans.recordset[0].OrderId)
-      .input("adminId", sql.Int, Trans.recordset[0].AdminId)
-      .input("id", sql.Int, Trans.recordset[0].Id)
-      .input("message", sql.VarChar, data.Message)
-      .input("isCancel", sql.Bit, IsCancel)
-      .input("date", sql.Date, currentDate)
-      .query(querys.UPDATETRANS);
-
-    if (IsCancel == true && Trans.recordset[0].IsCancel == false) {
-      //update the product Quanity to  plus
-      OrderProducts.recordset.forEach(function (orderProduct) {
-        var product = Products.recordset.find(function (product) {
-          if (orderProduct.ProductId == product.Id) {
-            return product;
-          }
-        });
-
-        //product is not undefined
-        if (product) {
-          const ProductQuantity = product.Quantity + orderProduct.Quantity;
-          UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
-            (data) => {
-              console.log(data);
-            }
-          );
-        }
-      });
-    } else if (IsCancel == false && Trans.recordset[0].IsCancel == true) {
-      //update The prouduct Quantity to minus
-      OrderProducts.recordset.forEach(function (orderProduct) {
-        var product = Products.recordset.find(function (product) {
-          if (orderProduct.ProductId == product.Id) {
-            return product;
-          }
-        });
-        //product is not undefined
-        if (product) {
-          const ProductQuantity = product.Quantity - orderProduct.Quantity;
-          UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
-            (data) => {
-              console.log(data);
-            }
-          );
-        }
-      });
-    }
-  } else {
-    const currentDate = new Date().toDateString();
-
-    var TotalAmount = 0;
-
-    //Get TotalAmount and update Prouducts if order is not cancel
-    OrderProducts.recordset.forEach(function (orderProduct) {
-      var product = Products.recordset.find(function (product) {
-        if (orderProduct.ProductId == product.Id) {
-          return product;
+    for (let j = 0; j < OrderProducts.length; j++) {
+      var product = products.recordset.find((productObj) => {
+        if (OrderProducts[j].ProductId == productObj.Id) {
+          return productObj;
         }
       });
 
       if (product) {
-        TotalAmount += product.ProductPrice * orderProduct.Quantity;
-        if (IsCancel == false) {
-          const ProductQuantity = product.Quantity - orderProduct.Quantity;
-          UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
-            (data) => {
-              console.log(data);
-            }
-          );
-        }
+        OrderProducts[j].ProductName = product.ProductName;
+        OrderProducts[j].ImageUrl = product.ImageUrl;
+        OrderProducts[j].Price = product.ProductPrice;
+        OrderProducts[j].TotalPrice =
+          OrderProducts[j].Quantity * product.ProductPrice;
       }
-    });
+    }
+    elements.OrderProducts = OrderProducts;
+  });
 
-    //Get paymentMode
-    var ModeOfpayment = order.recordset[0].ModePayment;
+  return response.recordset;
+}
 
-    //Create trans
-    const CreateTrans = await pool
+//Update Order
+async function UpdateOrders(orderId, adminId, data) {
+  try {
+    var datetime = data.date.length > 0 ? new Date(data.date) : null;
+    var IsCancel = data.CancelOrder != undefined ? true : false;
+    const pool = await ConenctedToSql();
+
+    //UpdateOrders
+    const response = await pool
       .request()
-      .input("adminId", sql.Int, adminId)
+      .input("status", sql.Bit, 1)
+      .input("deliveryDate", sql.Date, datetime)
       .input("orderId", sql.Int, orderId)
-      .input("totalAmount", sql.Decimal, TotalAmount)
-      .input("paymentMode", sql.VarChar, ModeOfpayment)
+      .input("adminId", sql.Int, adminId)
+      .input("message", sql.VarChar, data.Message)
       .input("isCancel", sql.Bit, IsCancel)
-      .input("Message", sql.VarChar, data.Message)
-      .input("date", sql.Date, currentDate)
-      .query(querys.CREATETRANS);
+      .query(querys.UPDATEORDERS);
 
-    return response.rowsAffected[0];
+    //Get Order with OrderId
+    const order = await pool
+      .request()
+      .input("orderId", sql.Int, orderId)
+      .query(querys.GETORDERBYID);
+
+    //Get OrderProducts with adminId and OrderId
+    const OrderProducts = await pool
+      .request()
+      .input("orderId", sql.Int, orderId)
+      .input("adminId", sql.Int, adminId)
+      .query(querys.GETORDERPRODUCTSBYID);
+
+    //Get all Products
+    const Products = await pool.request().query(querys.GETPRODUCTS);
+
+    //Get Check Transaction Already Exists
+    const Trans = await pool
+      .request()
+      .input("orderId", sql.Int, orderId)
+      .input("adminId", sql.Int, adminId)
+      .query(querys.GETRANSBYCHECK);
+
+    if (Trans.recordset.length > 0) {
+      const currentDate = new Date().toDateString();
+      const updateTrans = await pool
+        .request()
+        .input("orderId", sql.Int, Trans.recordset[0].OrderId)
+        .input("adminId", sql.Int, Trans.recordset[0].AdminId)
+        .input("id", sql.Int, Trans.recordset[0].Id)
+        .input("message", sql.VarChar, data.Message)
+        .input("isCancel", sql.Bit, IsCancel)
+        .input("date", sql.Date, currentDate)
+        .query(querys.UPDATETRANS);
+
+      if (IsCancel == true && Trans.recordset[0].IsCancel == false) {
+        let orderProducts = JSON.parse(
+          OrderProducts.recordset[0].OrderProducts
+        );
+
+        orderProducts.forEach(function (orderProduct) {
+          let product = Products.recordset.find(function (product) {
+            if (orderProduct.ProductId == product.Id) {
+              return product;
+            }
+          });
+          if (product) {
+            const ProductQuantity = product.Quantity + orderProduct.Quantity;
+            UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
+              (data) => {
+                console.log(data);
+              }
+            );
+          }
+        });
+        return 1;
+      } else if (IsCancel == false && Trans.recordset[0].IsCancel == true) {
+        let orderProducts = JSON.parse(
+          OrderProducts.recordset[0].OrderProducts
+        );
+
+        //update The prouduct Quantity to minus
+        orderProducts.forEach(function (orderProduct) {
+          var product = Products.recordset.find(function (product) {
+            if (orderProduct.ProductId == product.Id) {
+              return product;
+            }
+          });
+          //product is not undefined
+          if (product) {
+            const ProductQuantity = product.Quantity - orderProduct.Quantity;
+            UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
+              (data) => {
+                console.log(data);
+              }
+            );
+          }
+        });
+        return 1;
+      }
+    } else {
+      const currentDate = new Date().toDateString();
+      let ModeOfpayment = order.recordset[0].ModePayment;
+      let orderProducts = JSON.parse(OrderProducts.recordset[0].OrderProducts);
+
+      orderProducts.forEach(function (orderProduct) {
+        var product = Products.recordset.find(function (product) {
+          if (orderProduct.ProductId == product.Id) {
+            return product;
+          }
+        });
+
+        if (product) {
+          if (IsCancel == false) {
+            const ProductQuantity = product.Quantity - orderProduct.Quantity;
+            UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
+              (data) => {
+                console.log(data);
+              }
+            );
+          }
+        }
+      });
+      const CreateTrans = await pool
+        .request()
+        .input("adminId", sql.Int, adminId)
+        .input("orderId", sql.Int, orderId)
+        .input(
+          "totalAmount",
+          sql.Decimal,
+          OrderProducts.recordset[0].TotalAmount
+        )
+        .input("paymentMode", sql.VarChar, ModeOfpayment)
+        .input("isCancel", sql.Bit, IsCancel)
+        .input("Message", sql.VarChar, data.Message)
+        .input("date", sql.Date, currentDate)
+        .query(querys.CREATETRANS);
+
+        return 1;
+    }
+
+  } catch (error) {
+    console.log("Error: ", error);
+    return 1;
   }
 }
 
 //Get Transaction
-async function GetAllTrans(
-  adminId,
-  orderDate,
-  customerCancel,
-  sellerCancel,
-  PageNo
-) {
+async function GetAllTrans(adminId,orderDate,customerCancel,sellerCancel,PageNo) {
   try {
     let pageno = PageNo;
     let pagesize = 10;
@@ -444,6 +444,158 @@ async function GetAllTrans(
 }
 
 //////////////////////////////////////////...........
+
+//SQL GET ORDER FOR USER with pagination new functionality----------------------------------------------------------------
+async function GetOrder(userId, page_number) {
+  let pagesize =5;
+  const pool = await ConenctedToSql();
+  const products = await pool.request().query(querys.GETPRODUCTS);
+  const TotalOrder = await pool.request().input("userId",sql.Int,userId).query(querys.GETTOTALORDERSBYUSER);
+  let TotalOrderTotal = TotalOrder.recordset[0].TOTAL;
+
+  const response = await pool
+    .request()
+    .input("UserId", sql.Int, userId)
+    .input("Page", sql.Int, page_number)
+    .input("Size", sql.Int, pagesize)
+    .execute("sp_getuserorder");
+  const data = response.recordset;
+
+  let OrderId = -1;
+  let ResponseObj = [];
+  let Obj = {};
+
+  //Create Order Object
+  for (let i = 0; i < data.length; i++) {
+    if (data[i].OrderId === OrderId) {
+      if (OrderId === -1) {
+        Obj = {
+          Address: data[i].Address,
+          ModeOfpayment: data[i].ModePayment,
+          Pincode: data[i].Pincode,
+          OrderDate: new Date(data[i].Date).toDateString(),
+          OrderId: data[i].OrderId,
+          CustomerCancel: data[i].CustomerCancel,
+          Products: [],
+          TotalAmount: data[i].TotalAmount,
+        };
+        let ProductDetails = {
+          Products: JSON.parse(data[i].OrderProducts),
+          Status: data[i].Status,
+          DeliveryDate: data[i].DeliveryDate,
+          IsCancel:data[i].IsCancel,
+        };
+
+        Obj.Products.push(ProductDetails);
+        ResponseObj.push(Obj);
+        OrderId = data[i].OrderId;
+      } else {
+        Obj.TotalAmount += data[i].TotalAmount;
+        let ProductDetails = {
+          Products: JSON.parse(data[i].OrderProducts),
+          Status: data[i].Status,
+          DeliveryDate: data[i].DeliveryDate,
+          IsCancel:data[i].IsCancel,
+        };
+        Obj.Products.push(ProductDetails);
+        OrderId = data[i].OrderId;
+      }
+    } else {
+      Obj = {
+        Address: data[i].Address,
+        ModeOfpayment: data[i].ModePayment,
+        Pincode: data[i].Pincode,
+        OrderDate: new Date(data[i].Date).toDateString(),
+        OrderId: data[i].OrderId,
+        CustomerCancel: data[i].CustomerCancel,
+        Products: [],
+        TotalAmount: data[i].TotalAmount,
+      };
+      let ProductDetails = {
+        Products: JSON.parse(data[i].OrderProducts),
+        Status: data[i].Status,
+        DeliveryDate: data[i].DeliveryDate,
+        IsCancel:data[i].IsCancel,
+      };
+      Obj.Products.push(ProductDetails);
+      ResponseObj.push(Obj);
+      OrderId = data[i].OrderId;
+    }
+  }
+
+  let Status = true;
+  let DeliveryDate = null;
+
+  //Delivery Date and Status Update
+  for (let i = 0; i < ResponseObj.length; i++) {
+    let TempProducts = ResponseObj[i].Products;
+    for (let i = 0; i < TempProducts.length; i++) {
+      if (TempProducts[i].Status == null) {
+        Status = false;
+      }
+      if (
+        TempProducts[i].DeliveryDate !== null  ||
+        new Date(TempProducts[i].DeliveryDate) > new Date(DeliveryDate)
+      ) {
+        DeliveryDate = new Date(TempProducts[i].DeliveryDate).toDateString();
+      }
+    }
+    
+    if(ResponseObj[i].CustomerCancel==true){
+      ResponseObj[i].IsAllStatusUpdate = true;
+      ResponseObj[i].Message="Order Cancelled";
+      ResponseObj[i].OrderStatus="Updated"
+      ResponseObj[i].DeliveryDate = null;
+    }
+    else if ( Status == true && DeliveryDate != null) {
+      ResponseObj[i].DeliveryDate = DeliveryDate;
+      ResponseObj[i].IsAllStatusUpdate = true;
+      ResponseObj[i].Message="Approved By seller";
+      ResponseObj[i].OrderStatus="Updated"
+    } else if (Status == true && DeliveryDate == null) {
+      ResponseObj[i].DeliveryDate = null;
+      ResponseObj[i].IsAllStatusUpdate = false;
+      ResponseObj[i].Message="seller  Cancel Your Order";
+      ResponseObj[i].OrderStatus="Updated"
+    }else{
+      ResponseObj[i].DeliveryDate = null;
+      ResponseObj[i].IsAllStatusUpdate = false;
+      ResponseObj[i].Message="Your Order is not Updated";
+      ResponseObj[i].OrderStatus="Not Updated yet"
+    }
+  }
+
+  //Product image maps
+  for (let i = 0; i < ResponseObj.length; i++) {
+    let TempProducts = ResponseObj[i].Products;
+    for (let i = 0; i < TempProducts.length; i++) {
+      let Productarray = TempProducts[i].Products;
+      for (let j = 0; j < Productarray.length; j++) {
+        var product = products.recordset.find((productObj) => {
+          if (Productarray[j].ProductId == productObj.Id) {
+            return productObj;
+          }
+        });
+
+        if (product) {
+          Productarray[j].ProductName = product.ProductName;
+          Productarray[j].ImageUrl = product.ImageUrl;
+          Productarray[j].Price = product.ProductPrice;
+          Productarray[j].ProductTotal=Productarray[j].Quantity*product.ProductPrice;
+        }
+      }
+    }
+  }
+
+  const OrderObj = {
+    Order: ResponseObj,
+    current: parseInt(page_number),
+    pages: Math.ceil(TotalOrderTotal / pagesize),
+  };
+  
+  return OrderObj;
+}
+
 //getallProducts for users
 async function GetAllProduct() {
   const pool = await ConenctedToSql();
@@ -521,27 +673,31 @@ async function GetAllCart(user_id) {
     .input("userId", sql.Int, user_id)
     .query(querys.GETCART);
 
-  let CartsProducts=JSON.parse(cart.recordset[0].CartProducts);
-  cart.recordset[0].CartProducts=CartsProducts;
+  if (cart.recordset.length > 0) {
+    let CartsProducts = JSON.parse(cart.recordset[0].CartProducts);
+    cart.recordset[0].CartProducts = CartsProducts;
 
-  cart.recordset[0].CartProducts.forEach((cartObj) => {
-    var product = products.recordset.find((productObj) => {
-      if (cartObj.ProductId == productObj.Id) {
-        return productObj;
+    cart.recordset[0].CartProducts.forEach((cartObj) => {
+      var product = products.recordset.find((productObj) => {
+        if (cartObj.ProductId == productObj.Id) {
+          return productObj;
+        }
+      });
+      if (product != undefined) {
+        cartObj.ProductId = product.Id;
+        cartObj.ProductName = product.ProductName;
+        cartObj.ProductDescription = product.ProductDescription;
+        cartObj.ProductPrice = product.ProductPrice;
+        cartObj.ImageUrl = product.ImageUrl;
+        cartObj.Quantity = product.Quantity;
+        responsObj.push(cartObj);
       }
     });
-    if (product != undefined) {
-      cartObj.ProductId = product.Id;
-      cartObj.ProductName = product.ProductName;
-      cartObj.ProductDescription = product.ProductDescription;
-      cartObj.ProductPrice = product.ProductPrice;
-      cartObj.ImageUrl = product.ImageUrl;
-      cartObj.Quantity = product.Quantity;
-      responsObj.push(cartObj);
-    }
-  });
 
-  return responsObj;
+    return responsObj;
+  } else {
+    return [];
+  }
 }
 
 //Remove cart by User Done
@@ -552,31 +708,21 @@ async function RemoveCart(productId, userId) {
     .request()
     .input("userId", sql.Int, userId)
     .query(querys.GETCART);
-  let CartsObj=[];
-  let CartsProducts=JSON.parse(cart.recordset[0].CartProducts); 
+  let CartsObj = [];
+  let CartsProducts = JSON.parse(cart.recordset[0].CartProducts);
 
-  CartsProducts.forEach(function(product) {
-    if(product.ProductId!=productId) {
+  CartsProducts.forEach(function (product) {
+    if (product.ProductId != productId) {
       CartsObj.push(product);
     }
-  })
+  });
 
-  let data=JSON.stringify(CartsObj);
-  const response = await pool
-  .request()
-  .input("cartProducts", sql.VarChar, data)
-  .input("userId", sql.Int, userId)
-  .query(querys.UPDATECART);
-return response.rowsAffected[0];
-}
-
-//PLACE ORDER
-async function PlacedOrder(userId) {
-  const pool = await ConenctedToSql();
+  let data = JSON.stringify(CartsObj);
   const response = await pool
     .request()
+    .input("cartProducts", sql.VarChar, data)
     .input("userId", sql.Int, userId)
-    .query(querys.PLACEORDER);
+    .query(querys.UPDATECART);
   return response.rowsAffected[0];
 }
 
@@ -623,8 +769,11 @@ async function GetProductByPagination(page, productName, priceRange, callback) {
 //confirm Order
 async function ConfirmOrder(userId, obj) {
   try {
+    let UniqueAdminId = [...new Set(obj.AdminId)];
     var datetime = new Date();
     const pool = await ConenctedToSql();
+    const products = await pool.request().query(querys.GETPRODUCTS);
+
     const response = await pool
       .request()
       .input("userId", sql.Int, userId)
@@ -633,29 +782,58 @@ async function ConfirmOrder(userId, obj) {
       .input("date", sql.Date, datetime)
       .input("modePayment", sql.VarChar, obj.modeOfPayment)
       .query(querys.ADDORDER);
-    const LastOrder = await pool.request().query(querys.GETLASTORDER);
-    const LastOrderId = LastOrder.recordset[LastOrder.recordset.length - 1].Id;
-    for (var i = 0; i < obj.ProductId.length; i++) {
+
+    const OrderId = response.recordset[0].SCOPE_IDENTITY;
+    let orderProducts = [];
+    let TotalItemQuantity = 0;
+    let TotalPrice = 0;
+
+    for (var j = 0; j < UniqueAdminId.length; j++) {
+      for (var i = 0; i < obj.ProductId.length; i++) {
+        var product = products.recordset.find((productObj) => {
+          if (obj.ProductId[i] == productObj.Id) {
+            return productObj;
+          }
+        });
+
+        if (obj.AdminId[i] == UniqueAdminId[j]) {
+          let Obj = {
+            ProductId: obj.ProductId[i],
+            Quantity: obj.ProductQuantity[i],
+          };
+          TotalPrice += product.ProductPrice * parseInt(obj.ProductQuantity[i]);
+          TotalItemQuantity += parseInt(obj.ProductQuantity[i]);
+          orderProducts.push(Obj);
+          AdminId = obj.AdminId[i];
+        }
+      }
+
+      let data = JSON.stringify(orderProducts);
       const saveProducts = await pool
         .request()
-        .input("orderId", sql.Int, LastOrderId)
-        .input("productId", sql.Int, obj.ProductId[i])
-        .input("adminId", sql.Int, obj.AdminId[i])
-        .input("quantity", sql.Int, obj.ProductQuantity[i])
+        .input("orderId", sql.Int, OrderId)
+        .input("orderProducts", sql.VarChar, data)
+        .input("adminId", sql.Int, UniqueAdminId[j])
+        .input("totalAmount", sql.Int, TotalPrice)
+        .input("totalItemQuantity", sql.Int, TotalItemQuantity)
         .query(querys.ADDORDERPRODUCTS);
+      orderProducts = [];
+      TotalItemQuantity = 0;
+      TotalPrice = 0;
     }
+    const placedOrder = await pool
+      .request()
+      .input("userId", sql.Int, userId)
+      .query(querys.PLACEORDER);
 
-    PlacedOrder(userId).then((Data) => {
-      return true;
-    });
-    return false;
+    return placedOrder.rowsAffected[0];
   } catch (error) {
-    console.log(error);
+    console.log("Error", error);
   }
 }
 
 //SQL GET ORDER FOR USER with pagination
-async function GetOrder(userId, page_number) {
+async function Old_GetOrder(userId, page_number) {
   let OrderArray = [];
   let OrderProductArray = [];
   let ProductArray = [];
@@ -790,11 +968,6 @@ async function GetOrder(userId, page_number) {
 async function CancelOrder(id, userId) {
   const pool = await ConenctedToSql();
 
-  const Order = await pool
-    .request()
-    .input("orderId", sql.Int, id)
-    .query(querys.GETORDERBYID);
-
   //Getall Admin Order
   const CancelOrder = await pool
     .request()
@@ -813,20 +986,23 @@ async function CancelOrder(id, userId) {
       element.Status == true &&
       element.IsCancel != true
     ) {
-      UpdateProductQuantityAfterCancel(
-        element.ProductId,
-        element.Quantity,
-        element.AdminId
-      ).then((data) => {
-        console.log(`update Product Quantity`);
-      });
-      updateTrans(element.OrderId, element.AdminId).then((data) => {
-        console.log("Trans Update");
-      });
+     const Products=JSON.parse(element.OrderProducts);
+      Products.forEach((product) => {
+        UpdateProductQuantityAfterCancel(
+          product.ProductId,
+          product.Quantity,
+          element.AdminId
+        ).then((data) => {
+          console.log(`update Product Quantity`);
+        });
+        updateTrans(element.OrderId, element.AdminId).then((data) => {
+          console.log("Trans Update");
+        });
+
+      })
     }
   });
-
-  return CancelOrder.rowsAffected[0];
+ return true;
 }
 
 //Update Product Quantity
@@ -879,6 +1055,7 @@ async function updateTrans(orderId, AdminId) {
   }
 }
 
+
 module.exports = {
   AddProduct,
   GetAllProduct,
@@ -889,7 +1066,6 @@ module.exports = {
   UpdateProduct,
   DeleteProduct,
   RemoveCart,
-  PlacedOrder,
   GetProductByPagination,
   GetAllAdminProduct,
   ConfirmOrder,
@@ -899,5 +1075,4 @@ module.exports = {
   UpdateOrders,
   GetAllTrans,
   CancelOrder,
-  new_OpenBucketAdmin,
 };

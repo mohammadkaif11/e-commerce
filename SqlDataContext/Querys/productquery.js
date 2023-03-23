@@ -14,9 +14,9 @@ const querys = {
     DELETECART:"DELETE FROM [ECM].[dbo].[Cart] WHERE ProductId=@productId and UserId=@userId;",
     PLACEORDER:"DELETE FROM [ECM].[dbo].[Cart] WHERE  UserId=@userId;",
     COUNT:"SELECT count(*) as Totalproducts FROM products",
-    ADDORDER:"INSERT INTO [ECM].[dbo].[Orders] (UserId,Date,Address,Pincode,ModePayment,CustomerCancel) VALUES (@userId,@date,@address,@pincode,@modePayment,0)",
+    ADDORDER:"INSERT INTO [ECM].[dbo].[Orders] (UserId,Date,Address,Pincode,ModePayment,CustomerCancel,IsOrderSuccess) VALUES (@userId,@date,@address,@pincode,@modePayment,0,0) SELECT SCOPE_IDENTITY() AS [SCOPE_IDENTITY]",
     GETLASTORDER:"SELECT * FROM [ECM].[dbo].[Orders]",
-    ADDORDERPRODUCTS:"INSERT INTO [ECM].[dbo].[OrderProducts] (OrderId,ProductId,AdminId,Quantity) VALUES (@orderId,@productId,@adminId,@quantity)",
+    ADDORDERPRODUCTS:"INSERT INTO [ECM].[dbo].[OrderProducts] (OrderId,OrderProducts,AdminId,TotalAmount,TotalItemQuantity) VALUES (@orderId,@orderProducts,@adminId,@totalAmount,@totalItemQuantity)",
     GETORDER:"SELECT * FROM [ECM].[dbo].[Orders] WHERE UserId=@userId",
     GETORDERPRODUCTS:"SELECT * FROM [ECM].[dbo].[OrderProducts]",
     GETORDERPRODUCTSBYORDERID:"SELECT * FROM [ECM].[dbo].[OrderProducts] WHERE OrderId=@orderId",
@@ -30,7 +30,9 @@ const querys = {
     GETORDERPRODUCTSBYID:"SELECT * FROM [ECM].[dbo].[OrderProducts] where OrderId=@orderId and AdminId=@adminId",
     GETTRANS:"SELECT * FROM [ECM].[dbo].[Trans] WHERE AdminId=@adminId",
     GETRANSBYCHECK:"SELECT * FROM [ECM].[dbo].[Trans] WHERE AdminId=@adminId AND OrderId=@orderId",
-    UPDATETRANSAFTERCANCEL:"UPDATE TRANS SET CustomerCancel=1 where AdminId=@adminId and OrderId=@orderId"
+    UPDATETRANSAFTERCANCEL:"UPDATE TRANS SET CustomerCancel=1 where AdminId=@adminId and OrderId=@orderId",
+    GETTOTALORDERSPRODUCTSBYADMIN:"SELECT COUNT(*) AS TOTAL FROM [ECM].[dbo].[OrderProducts] Where AdminId=@adminId;",
+    GETTOTALORDERSBYUSER:"SELECT COUNT(*) AS TOTAL FROM [Orders] where UserId=@userId;"
   };
 
 
