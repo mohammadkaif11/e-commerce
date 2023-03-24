@@ -12,7 +12,6 @@ var config = {
 const ConenctedToSql=async()=>{
       try {
         const pool = await sql.connect(config);
-        console.log('Connected to SQL Server')
         return pool;
       } catch (error) {
         console.error(error);
