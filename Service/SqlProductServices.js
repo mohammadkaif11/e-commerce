@@ -38,7 +38,6 @@ async function GetAllAdminProduct(UserId) {
     .request()
     .input("userId", sql.Int, UserId)
     .query(querys.GETADMINPRODUCTS);
-  console.log(products);
   return products.recordset;
 }
 
@@ -77,7 +76,6 @@ async function DeleteProduct(id, UserId) {
     Key: productById[0].ImageKey,
   };
   await s3.deleteObject(params).promise();
-  console.log("file deleted Successfully");
   const response = await pool
     .request()
     .input("id", sql.Int, id)
@@ -189,7 +187,6 @@ async function OpenBucketAdmin(AdminId, pageNumber) {
     .request()
     .input("adminId", sql.Int, AdminId)
     .query(querys.GETTOTALORDERSPRODUCTSBYADMIN);
-  console.log(totalOrderProducts);
   let TotalOrderProducts = parseInt(totalOrderProducts.recordset[0].TOTAL);
 
   const BucketObject = {
@@ -304,7 +301,7 @@ async function UpdateOrders(orderId, adminId, data) {
             const ProductQuantity = product.Quantity + orderProduct.Quantity;
             UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
               (data) => {
-                console.log(data);
+                //
               }
             );
           }
@@ -327,7 +324,7 @@ async function UpdateOrders(orderId, adminId, data) {
             const ProductQuantity = product.Quantity - orderProduct.Quantity;
             UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
               (data) => {
-                console.log(data);
+                // console.log(data);
               }
             );
           }
@@ -351,7 +348,7 @@ async function UpdateOrders(orderId, adminId, data) {
             const ProductQuantity = product.Quantity - orderProduct.Quantity;
             UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
               (data) => {
-                console.log(data);
+                // console.log(data);
               }
             );
           }
@@ -376,8 +373,8 @@ async function UpdateOrders(orderId, adminId, data) {
     }
 
   } catch (error) {
-    console.log("Error: ", error);
-    return 1;
+    console.log("Error : ", error);
+    return 0;
   }
 }
 
@@ -392,7 +389,6 @@ async function GetAllTrans(adminId,orderDate,customerCancel,sellerCancel,PageNo)
 
     if (orderDate != undefined && orderDate.length > 0) {
       OrderDate = orderDate;
-      console.log("Order Date: " + OrderDate);
     }
     if (customerCancel.length > 0) {
       CustomerCancel = 1;
@@ -433,7 +429,7 @@ async function GetAllTrans(adminId,orderDate,customerCancel,sellerCancel,PageNo)
 
     return obj;
   } catch (error) {
-    console.log(error);
+    console.log('Error: ' + error.message);
     const obj = {
       ResponseData: [],
       current: 1,
@@ -600,7 +596,6 @@ async function GetOrder(userId, page_number) {
 async function GetAllProduct() {
   const pool = await ConenctedToSql();
   const products = await pool.request().query(querys.GETPRODUCTS);
-  console.log(products);
   return products.recordset;
 }
 
@@ -621,7 +616,6 @@ async function AddtoCart(productId, user_id, adminId) {
     .request()
     .input("userId", sql.Int, user_id)
     .query(querys.CECKUSERINCART);
-  console.log("UserCartExist", UserCartExist.recordset);
   if (UserCartExist.recordset.length > 0) {
     let ProductCarts = UserCartExist.recordset[0].CartProducts;
     let ObjArray = JSON.parse(ProductCarts);
@@ -702,7 +696,6 @@ async function GetAllCart(user_id) {
 
 //Remove cart by User Done
 async function RemoveCart(productId, userId) {
-  console.log(productId, userId);
   const pool = await ConenctedToSql();
   const cart = await pool
     .request()
@@ -756,7 +749,6 @@ async function GetProductByPagination(page, productName, priceRange, callback) {
   const newTotalProducts = await pool
     .request()
     .query(`exec TotalProducts ${ProuductName},${PriceRange}`);
-  console.log(newTotalProducts);
   const newCount = newTotalProducts.recordset[0].TotalProducts;
   const obj = {
     products: products.recordset,
@@ -828,7 +820,7 @@ async function ConfirmOrder(userId, obj) {
 
     return placedOrder.rowsAffected[0];
   } catch (error) {
-    console.log("Error", error);
+    console.log('Error : ' + error.message);
   }
 }
 
@@ -993,10 +985,10 @@ async function CancelOrder(id, userId) {
           product.Quantity,
           element.AdminId
         ).then((data) => {
-          console.log(`update Product Quantity`);
+          // console.log(`update Product Quantity`);
         });
         updateTrans(element.OrderId, element.AdminId).then((data) => {
-          console.log("Trans Update");
+          // console.log("Trans Update");
         });
 
       })
@@ -1018,7 +1010,7 @@ async function UpdateProductQuantity(id, quantity, userId) {
 
     return UpdateProduct.rowsAffected[0];
   } catch (error) {
-    console.log(error);
+    console.log('Error : ',error.message);
   }
 }
 
@@ -1035,7 +1027,7 @@ async function UpdateProductQuantityAfterCancel(id, quantity, userId) {
 
     return UpdateProduct.rowsAffected[0];
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error.message);
   }
 }
 
@@ -1051,7 +1043,7 @@ async function updateTrans(orderId, AdminId) {
 
     return UpdateProduct.rowsAffected[0];
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error.message);
   }
 }
 

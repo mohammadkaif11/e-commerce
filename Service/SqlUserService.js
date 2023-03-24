@@ -102,7 +102,6 @@ async function CheckUserbyEmail(email) {
   if (user.recordset.length == 0) {
     return null;
   }
-  console.log(user.recordset[0]);
   return user.recordset[0];
 }
 

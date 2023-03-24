@@ -117,7 +117,7 @@ async function PageView(req, res) {
       }
     );
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -144,7 +144,7 @@ function AdminView(req, res) {
         });
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -157,7 +157,6 @@ function AdminGetById(req, res) {
     } else {
       SqlproductService.GetProductByIds(id)
         .then((response) => {
-          console.log(response);
           res.render("Admin/ProductDetails.ejs", {
             products: response,
             message: "",
@@ -173,7 +172,7 @@ function AdminGetById(req, res) {
         });
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -187,11 +186,11 @@ function UpdateProduct(req, res) {
         res.redirect("/Admin");
       })
       .catch((error) => {
-        console.log(error);
+        console.log('Error : ' + error);
         res.redirect("/Admin");
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -239,7 +238,7 @@ function AddProduct(req, res) {
           res.redirect("/Admin");
         })
         .catch((error) => {
-          console.log(error)
+          console.log('Error : ' + error);
           res.render("Admin/homePage.ejs", {
             products: [],
             username: req.session.userName,
@@ -249,7 +248,7 @@ function AddProduct(req, res) {
         });
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -261,7 +260,6 @@ function OpenBucket(req, res) {
     const UserId = req.session.userId;
     SqlproductService.OpenBucketAdmin(UserId, page)
       .then((data) => {
-        console.log(data)
         res.render("Admin/Bucket.ejs", {
           Orders: data.data,
           message: "",
@@ -272,7 +270,7 @@ function OpenBucket(req, res) {
         });
       })
       .catch((error) => {
-        console.log(error);
+        console.log('Error : ' + error);
         res.render("Admin/Bucket.ejs", {
           Orders: [],
           message: "Some Error!",
@@ -283,7 +281,7 @@ function OpenBucket(req, res) {
         });
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -303,6 +301,7 @@ function GetOrderbyId(req, res) {
         });
       })
       .catch((error) => {
+        console.log('Error : ' + error);
         res.render("Admin/UpdateOrder.ejs", {
           Orders: [],
           message: "",
@@ -311,7 +310,7 @@ function GetOrderbyId(req, res) {
         });
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -352,7 +351,7 @@ function TransactionHistory(req, res) {
         });
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -369,11 +368,11 @@ function UpdateOrderStatus(req, res) {
         });
       })
       .catch((error) => {
-        console.log(error);
+        console.log('Error : ' + error);
         res.redirect("/bucket/1");
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -414,6 +413,7 @@ function GetById(req, res) {
           });
         })
         .catch((error) => {
+          console.log('Error : ' + error);
           res.render("Product/ProductDetails.ejs", {
             products: [],
             message: "Refresh the page and try again",
@@ -422,7 +422,7 @@ function GetById(req, res) {
         });
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -440,6 +440,7 @@ function productView(req, res) {
         });
       })
       .catch((error) => {
+        console.log('Error : ' + error);
         res.render("Product/Product.ejs", {
           products: [],
           username: req.session.userName,
@@ -448,7 +449,7 @@ function productView(req, res) {
         });
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -475,7 +476,7 @@ function OpenCart(req, res) {
           });
         })
         .catch((error) => {
-          console.log(error);
+          console.log('Error : ' + error);
           res.render("Cart/Cart.ejs", {
             Cart: [],
             message: "Refresh message and try again",
@@ -485,7 +486,7 @@ function OpenCart(req, res) {
         });
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -498,18 +499,17 @@ function AddCart(req, res) {
     const AdminId = req.query.adminId;
     SqlproductService.AddtoCart(productId, userId, AdminId)
       .then((response) => {
-        console.log("Check success");
         res.redirect("/CheckCart");
       })
       .catch((error) => {
-        console.log(error)
+        console.log('Error : ' + error);
         res.render("Cart/Cart.ejs", {
           Cart: [],
           message: "some error try again",
         });
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -524,13 +524,14 @@ function RemoveCart(req, res) {
         res.redirect("/Product/1");
       })
       .catch((error) => {
+        console.log('Error : ' + error);
         res.render("Cart/Cart.ejs", {
           Cart: [],
           message: "some error try again",
         });
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -549,7 +550,7 @@ function PlacedOrder(req, res) {
         });
       })
       .catch((error) => {
-        console.log(error);
+        console.log('Error : ' + error);
         res.render("Cart/Cart.ejs", {
           Cart: [],
           message: "please try after sometimes",
@@ -558,7 +559,7 @@ function PlacedOrder(req, res) {
         });
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -584,6 +585,7 @@ function ConfirmPage(req, res) {
           });
         })
         .catch((error) => {
+          console.log('Error : ' + error);
           res.render("Cart/ConfirmPage.ejs", {
             Cart: response,
             message: "Refresh message and try again",
@@ -592,7 +594,7 @@ function ConfirmPage(req, res) {
         });
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -613,7 +615,7 @@ function ConfirmPagePost(req, res) {
       });
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -625,7 +627,6 @@ function Order(req, res) {
     const UserId = req.session.userId;
     SqlproductService.GetOrder(UserId, page)
       .then((data) => {
-        console.log("Order received :",data.Order);
         res.render("Cart/Order.ejs", {
           Orders: data.Order,
           message: "",
@@ -636,7 +637,7 @@ function Order(req, res) {
         });
       })
       .catch((error) => {
-        console.log(error);
+        console.log('Error : ' + error);
         res.render("Cart/Order.ejs", {
           Orders: [],
           message: "Some Error!",
@@ -647,7 +648,7 @@ function Order(req, res) {
         });
       });
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }
@@ -664,7 +665,7 @@ function CancelOrder(req,res){
      })
 
   } catch (error) {
-    console.log(error);
+    console.log('Error : ' + error);
     res.render("Error/error.ejs");
   }
 }

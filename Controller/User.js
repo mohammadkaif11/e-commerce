@@ -74,7 +74,7 @@ function AdminSignUp(req, res) {
             }
           })
           .catch((error) => {
-            console.log(error);
+            console.log('Error: ' + error.message);
             res.render("Signup/Signup.ejs", {
               message: "Server error please check",
               isValidation: true,
@@ -83,7 +83,7 @@ function AdminSignUp(req, res) {
       }
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error: ' + error.message);
     res.render("Error/error.ejs");
   }
 }
@@ -128,13 +128,14 @@ function ForgetPasswordEmail(req, res) {
         }
       })
       .catch((error) => {
-        console.log(error)
+        console.log('Error: ' + error.message);
         res.render("Login/ForgetPasswordEmail.ejs", {
           message: "Some thing Error",
           isValidation: true,
         });
       });
   } catch (error) {
+    console.log('Error: ' + error.message);
     res.render("Error/error.ejs");
   }
 }
@@ -160,7 +161,7 @@ function ForgetPasswordView(req, res) {
         }
     })
     .catch((error) => {
-        console.log(error);
+      console.log('Error: ' + error.message);
       res.render("Login/ForgetPassword.ejs", {
         message: "Someting error",
         Id: "randomId",
@@ -206,6 +207,7 @@ function ForgetPassword(req, res) {
             }
         })
         .catch((error) => {
+          console.log('Error: ' + error.message);
           res.render("Login/Login.ejs", {
             message: "Try again later",
             isValidation: false,
@@ -213,7 +215,7 @@ function ForgetPassword(req, res) {
         });
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error: ' + error.message);
     res.render("Error/error.ejs");
   }
 }
@@ -240,9 +242,11 @@ function verfiyEmail(req, res, next) {
         });
       })
       .catch((error) => {
+        console.log('Error: ' + error.message);
         res.redirect("/user/signup");
       });
   } catch (error) {
+    console.log('Error: ' + error.message);
     res.render("Error/error.ejs");
   }
 }
@@ -293,7 +297,7 @@ function ChangePassword(req, res) {
           });
         })
         .catch((error) => {
-            console.log(error)
+          console.log('Error: ' + error.message);
           res.render("Profile/ChangePassword.ejs", {
             message: "Server error please try after sometimes",
             username: req.session.userName,
@@ -302,7 +306,7 @@ function ChangePassword(req, res) {
         });
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error: ' + error.message);
     res.render("Error/error.ejs");
   }
 }
@@ -343,7 +347,7 @@ function ChangeName(req, res) {
           });
         })
         .catch((error) => {
-          console.log(error);
+          console.log('Error: ' + error.message);
           res.render("Profile/ChangeName.ejs", {
             message: "Server error try after sometimes",
             username: req.session.userName,
@@ -352,7 +356,7 @@ function ChangeName(req, res) {
         });
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error: ' + error.message);
     res.render("Error/error.ejs");
   }
 }
@@ -404,7 +408,7 @@ function signUp(req, res, next) {
             }
           })
           .catch((error) => {
-            console.log(error)
+            console.log('Error: ' + error.message);
             res.render("Signup/Signup.ejs", {
               message: "Server error please check",
               isValidation: true,
@@ -413,7 +417,7 @@ function signUp(req, res, next) {
       }
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error: ' + error.message);
     res.render("Error/error.ejs");
   }
 }
@@ -459,7 +463,7 @@ function login(req, res, next) {
           }
         })
         .catch((error) => {
-          console.log(error);
+          console.log('Error: ' + error.message);
           res.render("Login/Login.ejs", {
             message: "Server error please check",
             isValidation: true,
@@ -467,7 +471,7 @@ function login(req, res, next) {
         });
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error: ' + error.message);
     res.render("Error/error.ejs");
   }
 }
