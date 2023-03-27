@@ -31,7 +31,6 @@
         aria-labelledby="offcanvasExampleLabel"
       >
         <nav class="navbar bg-light border">
-          <form class="container-fluid border-5 p-2">
             <div
               class="input-group"
               style="display: flex; justify-content: space-between"
@@ -41,11 +40,11 @@
                 <input
                   style="width: 350px"
                   type="text"
-                  value="<%=productName%>"
                   name="productName"
                   placeholder="Search Product"
                   aria-label="Username"
                   aria-describedby="basic-addon1"
+                  id="name"
                 />
               </div>
               <div>
@@ -54,97 +53,51 @@
                   type="range"
                   name="priceRange"
                   style="width: 250px"
-                  value="<%=priceRange%>"
+                  value=0
                   min="0"
                   max="100000"
                   step="200"
-                  id="myRange"
+                  id="range"
                 />
                 <Label id="demo">0</Label>
               </div>
-              <div style="display: flex;justify-content: center; align-items: center;">
-                <button class="btn btn-dark mx-1">Submit</button>
+              <div
+                style="
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                "
+              >
+                <button class="btn btn-dark mx-1" onclick="filter()">Submit</button>
               </div>
             </div>
-          </form>
         </nav>
       </div>
     </div>
 
     <!--Product view -->
-    <div >
-      <div style="height: 80vh;" class="row container-fluid" style="overflow-x: auto">
+    <div>
+      <div
+        style="height: 80vh"
+        class="row container-fluid"
+        style="overflow-x: auto"
+        id="productView"
+      >
         <% if (message.length > 0) { %>
         <div class="alert alert-danger"><%= message %></div>
-        <% } %> <% if (products.length > 0) { %> <%
-        products.forEach(function(element) { %>
-        <div class="col-3 my-2">
-          <div class="card" style="width: 18rem">
-            <img
-              height="300px"
-              width="200px"
-              src="<%=element.ImageUrl%>"
-              class="card-img-top"
-              alt="..."
-            />
-            <div class="card-body">
-              <h5 class="card-title">Name:<%= element.ProductName %></h5>
-              <span style="font-weight: bold"
-                >Price:<%= element.ProductPrice %></span
-              >
-              <div class="button">
-                <a
-                  href="/addCart/<%= element.Id %>?adminId=<%= element.UserId %>"
-                  class="btn btn-primary"
-                  >Add to Cart</a
-                >
-                <a href="/GetById/<%= element.Id %>" class="btn btn-primary"
-                  >Details</a
-                >
-              </div>
-            </div>
-          </div>
-        </div>
-        <% }); %> <% } %>
-  
-        <nav
-          style="display: flex; align-items: center; justify-content: center"
-          aria-label="Page navigation example"
-        >
-          <ul class="pagination">
-            <% for(var i=1;i<=pages;i++) {%> <% if(i==current){ %> <%
-            if(productName!="" || priceRange >0 ){%>
-            <li class="page-item active">
-              <a
-                class="page-link"
-                href="/Product/<%=i%>?productName=<%=productName%>&priceRange=<%=priceRange%>"
-                ><%=i%></a
-              >
-            </li>
-            <% } else{ %>
-            <li class="page-item active">
-              <a class="page-link" href="/Product/<%=i%>"><%=i%></a>
-            </li>
-            <% } %> <% } else{ %> <% if(productName!="" || priceRange >0 ){%>
-            <li class="page-item">
-              <a
-                class="page-link"
-                href="/Product/<%=i%>?productName=<%=productName%>&priceRange=<%=priceRange%>"
-                ><%=i%></a
-              >
-            </li>
-            <% } else{ %>
-            <li class="page-item">
-              <a class="page-link" href="/Product/<%=i%>"><%=i%></a>
-            </li>
-            <% } %> <% } %> <% }; %>
-          </ul>
-        </nav>
-      </div>
-    </div>
- 
+        <% } %>
 
-    
+       
+      </div>
+    <!-- <div class="col-3 my-2">create dynamic header</div> -->
+    <nav
+    style="display: flex; align-items: center; justify-content: center"
+    aria-label="Page navigation example"
+  >
+    <ul class="pagination" id="pagerDiv"></ul>
+  </nav>
+    </div>
+
     <%- include("../partials/footer.ejs"); %>
     <script
       src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
@@ -164,7 +117,88 @@
   </body>
 </html>
 <script>
-  var slider = document.getElementById("myRange");
+  //get Products
+  let pager = document.getElementById("pagerDiv");
+  let productView = document.getElementById("productView");
+  let Curretpage = 1;
+  let range=0;
+  let name="";
+  GetProducts();
+
+  function GetProducts() {
+    const data = { page: Curretpage,range: range,name: name };
+    fetch("/getProduct", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data", data);
+
+        let html = "";
+
+        data.Data.products.forEach((element) => {
+          html += `  <div class="col-3 my-2">
+          <div class="card" style="width: 18rem">
+            <img
+              height="300px"
+              width="200px"
+              src="${element.ImageUrl}"
+              class="card-img-top"
+              alt="..."
+            />
+            <div class="card-body">
+              <h5 class="card-title">Name:${element.ProductName}</h5>
+              <span style="font-weight: bold"
+                >Price:${element.ProductPrice}</span
+              >
+              <div class="button">
+                <a
+                  href="/addCart/${element.Id}?adminId=${element.UserId}"
+                  class="btn btn-primary"
+                  >Add to Cart</a
+                >
+                <a href="/GetById/${element.Id}" class="btn btn-primary"
+                  >Details</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>`;
+        });
+
+        productView.innerHTML = html;
+
+        let navhtml="";
+        //creating navbar
+        for (var i = 1; i <= data.Data.pages; i++) {
+          if (i == data.Data.current) {
+            navhtml += ` <li  onclick=changepage(${i}) class="page-item active"><button class="page-link" >${i}</button></li>`;
+          } else {
+            navhtml += ` <li onclick=changepage(${i})  class="page-item"><button class="page-link" >${i}</button></li>`;
+          }
+        }
+
+        pager.innerHTML=navhtml;
+      });
+  }
+
+  function changepage(i) {
+    Curretpage = i;
+    GetProducts();
+  }
+
+  function filter() {
+   range=document.getElementById('range').value;
+   name=document.getElementById('name').value;
+   Curretpage=1;
+   GetProducts();
+  }
+
+  var slider = document.getElementById("range");
   var output = document.getElementById("demo");
   output.innerHTML = slider.value; // Display the default slider value
   // Update the current slider value (each time you drag the slider handle)

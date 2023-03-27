@@ -23,7 +23,6 @@ const s3 = new aws.S3({
   Bucket: BUCKET_NAME,
 });
 
-
 //using Local folders uploads
 // const upload = multer({ dest: "uploads/" });
 //upload middleware
@@ -45,7 +44,6 @@ const upload = multer({
   }),
 });
 
-
 router.get("/", CheckUserLogin, productView);
 router.get("/Product/:page", CheckUserLogin, PageView);
 router.get("/CheckCart", CheckUserLogin, OpenCart);
@@ -56,12 +54,13 @@ router.get("/ConfirmPage", CheckUserLogin, ConfirmPage);
 router.post("/ConfirmPage", CheckUserLogin, ConfirmPagePost);
 router.get("/checkOrder/:page", CheckUserLogin, Order);
 router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
-router.get('/CancelOrder/:id',CheckUserLogin,CancelOrder);
-router.get('/GetCartdata',CheckUserLogin,GetCartdata);
-router.get('/updateAddCart/:id',CheckUserLogin,UpdateAddCart);
-router.get('/updateRemoveCart/:id',CheckUserLogin,UpdateRemoveCart);
-
-
+router.get("/CancelOrder/:id", CheckUserLogin, CancelOrder);
+router.get("/GetCartdata", CheckUserLogin, GetCartdata);
+//+1,-1 carts
+router.get("/updateAddCart/:id", CheckUserLogin, UpdateAddCart);
+router.get("/updateRemoveCart/:id", CheckUserLogin, UpdateRemoveCart);
+//Get paginated data
+router.post("/getProduct", CheckUserLogin, getProducts);
 
 //Admin Routes
 router.post(
@@ -80,50 +79,37 @@ router.get("/updateOrder/:orderId", AdminRole, GetOrderbyId);
 router.post("/updateOrder/:orderId", AdminRole, UpdateOrderStatus);
 router.get("/transactionhistory/:page", AdminRole, TransactionHistory);
 
-
-//Admin User Get all Product
+// User Get all Product
 async function PageView(req, res) {
   try {
-    var page = req.params.page || 1;
-    var productName = req.query.productName || "";
-    var priceRange = req.query.priceRange || "";
-    if (req.session.role == "Admin") {
-      res.redirect("/Admin");
-      return;
-    }
+    res.render("Product/paginationHomepage.ejs", {
+      message: "",
+      username: req.session.userName,
+      role: req.session.role
+    });
+  } catch (error) {
+    console.log("Error : " + error);
+    res.render("Error/error.ejs");
+  }
+}
+
+// Api for all Products
+async function getProducts(req, res) {
+  try {
+    var page = req.body.page || 1;
+    var priceRange = parseInt(req.body.range) == 0 ? "" : req.body.range;
+    var productName = req.body.name.length > 0 ? req.body.name : "";
     SqlproductService.GetProductByPagination(
       page,
       productName,
       priceRange,
       function (data) {
-        if (data) {
-          res.render("Product/paginationHomepage.ejs", {
-            products: data.products,
-            pages: data.pages,
-            current: data.current,
-            message: "",
-            username: req.session.userName,
-            role: req.session.role,
-            productName: productName,
-            priceRange: priceRange || 0,
-          });
-        } else {
-          res.render("Product/paginationHomepage.ejs", {
-            products: [],
-            pages: 1,
-            current: 1,
-            message: "In valid pageNumber",
-            username: req.session.userName,
-            role: req.session.role,
-            roductName: "",
-            priceRange: 0,
-          });
-        }
+        res.send({ Msg: "Success get Products by Pagination", Data: data });
       }
     );
   } catch (error) {
-    console.log('Error : ' + error);
-    res.render("Error/error.ejs");
+    console.log("Error : " + error);
+    res.send({ Msg: "Internal ServerError", Data: {} });
   }
 }
 
@@ -149,7 +135,7 @@ function AdminView(req, res) {
         });
       });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -177,7 +163,7 @@ function AdminGetById(req, res) {
         });
     }
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -191,11 +177,11 @@ function UpdateProduct(req, res) {
         res.redirect("/Admin");
       })
       .catch((error) => {
-        console.log('Error : ' + error);
+        console.log("Error : " + error);
         res.redirect("/Admin");
       });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -226,7 +212,7 @@ function AddProduct(req, res) {
       req.body.ProductName == "" ||
       req.body.ProductPrice == "" ||
       req.body.ProductDescription == "" ||
-      req.body.Quantity==0
+      req.body.Quantity == 0
     ) {
       res.render("Admin/homePage.ejs", {
         products: [],
@@ -243,7 +229,7 @@ function AddProduct(req, res) {
           res.redirect("/Admin");
         })
         .catch((error) => {
-          console.log('Error : ' + error);
+          console.log("Error : " + error);
           res.render("Admin/homePage.ejs", {
             products: [],
             username: req.session.userName,
@@ -253,7 +239,7 @@ function AddProduct(req, res) {
         });
     }
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -275,7 +261,7 @@ function OpenBucket(req, res) {
         });
       })
       .catch((error) => {
-        console.log('Error : ' + error);
+        console.log("Error : " + error);
         res.render("Admin/Bucket.ejs", {
           Orders: [],
           message: "Some Error!",
@@ -286,7 +272,7 @@ function OpenBucket(req, res) {
         });
       });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -306,7 +292,7 @@ function GetOrderbyId(req, res) {
         });
       })
       .catch((error) => {
-        console.log('Error : ' + error);
+        console.log("Error : " + error);
         res.render("Admin/UpdateOrder.ejs", {
           Orders: [],
           message: "",
@@ -315,7 +301,7 @@ function GetOrderbyId(req, res) {
         });
       });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -323,23 +309,29 @@ function GetOrderbyId(req, res) {
 //Transaction history
 function TransactionHistory(req, res) {
   try {
-    const page=req.params.page;
+    const page = req.params.page;
     const UserId = req.session.userId;
-    const CustomerCancel = req.query.CustomerCancel||"";
-    const OrderDate=req.query.OrderDate || "";
-    const YourCancel=req.query.YourCancel || "";
-    SqlproductService.GetAllTrans(UserId,OrderDate, CustomerCancel, YourCancel,page)
+    const CustomerCancel = req.query.CustomerCancel || "";
+    const OrderDate = req.query.OrderDate || "";
+    const YourCancel = req.query.YourCancel || "";
+    SqlproductService.GetAllTrans(
+      UserId,
+      OrderDate,
+      CustomerCancel,
+      YourCancel,
+      page
+    )
       .then((data) => {
         res.render("Admin/Trans.ejs", {
           Transaction: data.ResponseData,
           message: "",
           username: req.session.userName,
           role: req.session.role,
-          current:data.current,
-          pages:data.pages,
-          OrderDate:OrderDate,
-          CustomerCancel:CustomerCancel,
-          YourCancel:YourCancel
+          current: data.current,
+          pages: data.pages,
+          OrderDate: OrderDate,
+          CustomerCancel: CustomerCancel,
+          YourCancel: YourCancel,
         });
       })
       .catch((error) => {
@@ -348,15 +340,15 @@ function TransactionHistory(req, res) {
           message: "Some Error occurred",
           username: req.session.userName,
           role: req.session.role,
-          current:data.current,
-          pages:data.pages,
-          OrderDate:OrderDate,
-          CustomerCancel:CustomerCancel,
-          YourCancel:YourCancel
+          current: data.current,
+          pages: data.pages,
+          OrderDate: OrderDate,
+          CustomerCancel: CustomerCancel,
+          YourCancel: YourCancel,
         });
       });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -373,11 +365,11 @@ function UpdateOrderStatus(req, res) {
         });
       })
       .catch((error) => {
-        console.log('Error : ' + error);
+        console.log("Error : " + error);
         res.redirect("/bucket/1");
       });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -418,7 +410,7 @@ function GetById(req, res) {
           });
         })
         .catch((error) => {
-          console.log('Error : ' + error);
+          console.log("Error : " + error);
           res.render("Product/ProductDetails.ejs", {
             products: [],
             message: "Refresh the page and try again",
@@ -427,7 +419,7 @@ function GetById(req, res) {
         });
     }
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -445,7 +437,7 @@ function productView(req, res) {
         });
       })
       .catch((error) => {
-        console.log('Error : ' + error);
+        console.log("Error : " + error);
         res.render("Product/Product.ejs", {
           products: [],
           username: req.session.userName,
@@ -454,7 +446,7 @@ function productView(req, res) {
         });
       });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -477,33 +469,32 @@ function OpenCart(req, res) {
       });
     }
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
 
-//function get Cart data 
-function GetCartdata(req,res){
+//function get Cart data
+function GetCartdata(req, res) {
   try {
     let userId = req.session.userId;
     if (userId == "" || userId == null) {
-      res.json({"Msg":"Invalid user Id","Cart":[]});
+      res.json({ Msg: "Invalid user Id", Cart: [] });
     } else {
       SqlproductService.GetAllCart(userId)
         .then((response) => {
-          res.send({"Msg":"Success","Cart":response});
+          res.send({ Msg: "Success", Cart: response });
         })
         .catch((error) => {
-          console.log('Error : ' + error);
-          res.json({"Msg":"Something happen in backend","Cart":[]});
+          console.log("Error : " + error);
+          res.json({ Msg: "Something happen in backend", Cart: [] });
         });
     }
   } catch (error) {
-    console.log('Error : ' + error);
-    res.json({"Msg":"Something happen in backend","Cart":[]});
+    console.log("Error : " + error);
+    res.json({ Msg: "Something happen in backend", Cart: [] });
   }
 }
-
 
 //Open Cart
 function _OldCart(req, res) {
@@ -527,7 +518,7 @@ function _OldCart(req, res) {
           });
         })
         .catch((error) => {
-          console.log('Error : ' + error);
+          console.log("Error : " + error);
           res.render("Cart/Cart.ejs", {
             Cart: [],
             message: "Refresh message and try again",
@@ -537,7 +528,7 @@ function _OldCart(req, res) {
         });
     }
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -553,14 +544,14 @@ function AddCart(req, res) {
         res.redirect("/CheckCart");
       })
       .catch((error) => {
-        console.log('Error : ' + error);
+        console.log("Error : " + error);
         res.render("Cart/Cart.ejs", {
           Cart: [],
           message: "some error try again",
         });
       });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -572,18 +563,15 @@ function RemoveCart(req, res) {
     let userId = req.session.userId;
     SqlproductService.RemoveCart(productId, userId)
       .then((data) => {
-        res.redirect("/Product/1");
+        res.send({ Msg: "Cart deleted successfully" });
       })
       .catch((error) => {
-        console.log('Error : ' + error);
-        res.render("Cart/Cart.ejs", {
-          Cart: [],
-          message: "some error try again",
-        });
+        console.log("Error : " + error);
+        res.send({ Msg: "Cart deleted successfully" });
       });
   } catch (error) {
-    console.log('Error : ' + error);
-    res.render("Error/error.ejs");
+    console.log("Error : " + error);
+    res.send({ Msg: "Cart deleted successfully" });
   }
 }
 
@@ -601,7 +589,7 @@ function PlacedOrder(req, res) {
         });
       })
       .catch((error) => {
-        console.log('Error : ' + error);
+        console.log("Error : " + error);
         res.render("Cart/Cart.ejs", {
           Cart: [],
           message: "please try after sometimes",
@@ -610,7 +598,7 @@ function PlacedOrder(req, res) {
         });
       });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -635,7 +623,7 @@ function ConfirmPage(req, res) {
           });
         })
         .catch((error) => {
-          console.log('Error : ' + error);
+          console.log("Error : " + error);
           res.render("Cart/ConfirmPage.ejs", {
             Cart: response,
             message: "Refresh message and try again",
@@ -644,7 +632,7 @@ function ConfirmPage(req, res) {
         });
     }
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -665,7 +653,7 @@ function ConfirmPagePost(req, res) {
       });
     }
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
@@ -687,7 +675,7 @@ function Order(req, res) {
         });
       })
       .catch((error) => {
-        console.log('Error : ' + error);
+        console.log("Error : " + error);
         res.render("Cart/Order.ejs", {
           Orders: [],
           message: "Some Error!",
@@ -698,61 +686,62 @@ function Order(req, res) {
         });
       });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
 
 //Cancel the Order
-function CancelOrder(req,res){
+function CancelOrder(req, res) {
   try {
     let OrderId = req.params.id;
     const UserId = req.session.userId;
-    SqlproductService.CancelOrder(OrderId,UserId)
-     .then((data)=>{
-      res.redirect('/checkOrder/1');
-     })
-
+    SqlproductService.CancelOrder(OrderId, UserId).then((data) => {
+      res.redirect("/checkOrder/1");
+    });
   } catch (error) {
-    console.log('Error : ' + error);
+    console.log("Error : " + error);
     res.render("Error/error.ejs");
   }
 }
 
 //Add increments in Cart Products api
-function UpdateAddCart(req,res){
+function UpdateAddCart(req, res) {
   try {
     let productId = req.params.id;
     let userId = req.session.userId;
-    SqlproductService.addProductsInCart(productId,userId).then((data)=>{
-      res.send({Msg:" update cart successfully"})
-    }).catch((error)=>{
-      console.log('Error : ' + error);
-      res.send({Msg:"update cart successfully"})
-    })
+    SqlproductService.addProductsInCart(productId, userId)
+      .then((data) => {
+        res.send({ Msg: " update cart successfully" });
+      })
+      .catch((error) => {
+        console.log("Error : " + error);
+        res.send({ Msg: "update cart successfully" });
+      });
   } catch (error) {
-    console.log('Error : ' + error);
-    res.send({Msg:"Send update cart"})
+    console.log("Error : " + error);
+    res.send({ Msg: "Send update cart" });
   }
 }
 
 //Add decrements in Cart Products api
-function UpdateRemoveCart(req,res){
-try {
-  let productId = req.params.id;
-  let userId = req.session.userId;
-  SqlproductService.UpdateRemoveCart(productId,userId).then((data)=>{
-       res.send({Msg:"update cart successfully"})
-     }).catch((error)=>{
-       console.log('Error : ' + error);
- 
-       res.send({Msg:"update cart successfully"})
-     })
-  
-} catch (error) {
-  console.log('Error : ' + error);
-  res.send({Msg:"update cart successfully"})
-}
+function UpdateRemoveCart(req, res) {
+  try {
+    let productId = req.params.id;
+    let userId = req.session.userId;
+    SqlproductService.UpdateRemoveCart(productId, userId)
+      .then((data) => {
+        res.send({ Msg: "update cart successfully" });
+      })
+      .catch((error) => {
+        console.log("Error : " + error);
+
+        res.send({ Msg: "update cart successfully" });
+      });
+  } catch (error) {
+    console.log("Error : " + error);
+    res.send({ Msg: "update cart successfully" });
+  }
 }
 
 module.exports = router;
