@@ -577,7 +577,6 @@ function ConfirmPage(req, res) {
     } else {
       SqlproductService.GetAllCart(userId)
         .then((response) => {
-          console.log('cart response',response);
           res.render("Cart/ConfirmPage.ejs", {
             Cart: response,
             message: "",
@@ -660,7 +659,6 @@ function CancelOrder(req,res){
     const UserId = req.session.userId;
     SqlproductService.CancelOrder(OrderId,UserId)
      .then((data)=>{
-      console.log(data);
       res.redirect('/checkOrder/1');
      })
 
