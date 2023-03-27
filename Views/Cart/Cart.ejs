@@ -48,13 +48,15 @@
 </html>
 
 <script>
-  console.log("script is running");
   GetCartObject();
+
+  //Place Order 
   function PlaceOrder() {
     confirm("Confirm?");
     window.location.href = "/ConfirmPage";
   }
 
+  //Get Cart Object
   function GetCartObject() {
 
     var showCart = document.getElementById('showCart');
@@ -71,12 +73,12 @@
                   <span style="font-weight: bold;">Price:${element.ProductPrice}</span>
                   <span style="font-weight: bold;">Quantity:${element.Quantity}</span>
                   <div class="row">
-                    <button onclick=addingproduct(${element.ProductId})  href="/updateAddCart/" class="btn btn-primary my-1">+</button>  
-                    <button  onclick=removingproduct(${element.ProductId}) href="/updateRemoveCart/${element.ProductId}" class="btn btn-primary my-1">-</button>  
+                    <button onclick=addingproduct(${element.ProductId})   class="btn btn-primary my-1">+</button>  
+                    <button  onclick=removingproduct(${element.ProductId})  class="btn btn-primary my-1">-</button>  
                     </div>
                   <div class="row">
                     <a href="/GetById/${element.ProductId}" class="btn btn-primary my-1">Details</a>  
-                    <a href="/RemoveCart/${element.ProductId}" class="btn btn-primary my-1">Remove</a>  
+                    <button onclick=removefromcart(${element.ProductId})  class="btn btn-primary my-1">Remove</button>  
                     </div>
                 </div>
               </div>
@@ -86,7 +88,8 @@
       }
       );
   }
- //Plus Prouducts
+ 
+  //Plus Prouducts
  function addingproduct(id){
     fetch(`/updateAddCart/${id}`)
       .then((response) =>GetCartObject())
@@ -97,4 +100,12 @@
     fetch(`/updateRemoveCart/${id}`)
       .then((response) =>GetCartObject())
   }
+
+  //Rempve from Carts
+  function removefromcart(id){
+    fetch(`/RemoveCart/${id}`)
+      .then((response) =>GetCartObject())
+  }
+
+
 </script>
