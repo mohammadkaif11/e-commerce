@@ -56,6 +56,9 @@ router.get("/checkOrder/:page", CheckUserLogin, Order);
 router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
 router.get("/CancelOrder/:id", CheckUserLogin, CancelOrder);
 router.get("/GetCartdata", CheckUserLogin, GetCartdata);
+
+
+//--------------Api--------------------------------
 //+1,-1 carts
 router.get("/updateAddCart/:id", CheckUserLogin, UpdateAddCart);
 router.get("/updateRemoveCart/:id", CheckUserLogin, UpdateRemoveCart);
@@ -497,7 +500,7 @@ function GetCartdata(req, res) {
 }
 
 //Open Cart
-function _OldCart(req, res) {
+function _OpenCart(req, res) {
   try {
     let userId = req.session.userId;
     if (userId == "" || userId == null) {
