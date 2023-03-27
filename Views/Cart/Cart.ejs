@@ -1,51 +1,100 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Cart</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+      crossorigin="anonymous"
+    />
   </head>
   <body>
-     <%- include("../partials/header.ejs",{isAuth:true}); %>
-      <div class="container mx-2 my-2">
-        <div class="orderContainer">
-          <button class="btn btn-primary" onclick="PlaceOrder()">Placed Order</button>
-          <hr>
-       </div>
+    <%- include("../partials/header.ejs",{isAuth:true}); %>
+    <div class="container mx-2 my-2">
+      <div class="orderContainer">
+        <button class="btn btn-primary" onclick="PlaceOrder()">
+          Placed Order
+        </button>
+        <hr />
+      </div>
+    </div>
+    <div class="container">
+      <% if (message.length > 0) { %>
+      <div class="alert alert-danger"><%= message %></div>
+      <% } %>
+      <div class="row container-fluid" id="showCart">
 
       </div>
-      <div class="container">
-        <% if (message.length > 0) { %>
-          <div class="alert alert-danger"><%= message %></div>
-        <% } %>
-        <div class="row container-fluid">
-          <% Cart.forEach(function(element) { %>
-            <div class="col-3  my-2">
-              <div class="card" style="width: 18rem;">
-                <img height="300px" width="200px" src="<%=element.ImageUrl%>" class="card-img-top" alt="...">
-                <div class="card-body">
-                  <h5 class="card-title">Name:<%= element.ProductName %></h5>
-                  <span style="font-weight: bold;">Price:<%= element.ProductPrice %></span>
-                  <div class="row">
-                    <a href="/GetById/<%= element.ProductId %>" class="btn btn-primary my-1">Details</a>  
-                    <a href="/RemoveCart/<%= element.ProductId %>" class="btn btn-primary my-1">Remove</a>  
-                    </div>
-                </div>
-              </div>
-            </div>
-          <% }); %>
-        </div>
-      </div>   
-      <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>  
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+    </div>
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+      crossorigin="anonymous"
+    ></script>
   </body>
 </html>
 
 <script>
-  function PlaceOrder(){
-   confirm("Confirm?")
-   window.location.href="/ConfirmPage"
+  console.log("script is running");
+  GetCartObject();
+  function PlaceOrder() {
+    confirm("Confirm?");
+    window.location.href = "/ConfirmPage";
+  }
+
+  function GetCartObject() {
+
+    var showCart = document.getElementById('showCart');
+    fetch("/GetCartdata")
+      .then((response) => response.json())
+      .then((data) => {
+        let html="";
+        data.Cart.forEach(element => {
+            html+=`<div class="col-3  my-2">
+              <div class="card" style="width: 18rem;">
+                <img height="300px" width="200px" src="${element.ImageUrl}" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <h5 class="card-title">Name:${element.ProductName }</h5>
+                  <span style="font-weight: bold;">Price:${element.ProductPrice}</span>
+                  <span style="font-weight: bold;">Quantity:${element.Quantity}</span>
+                  <div class="row">
+                    <button onclick=addingproduct(${element.ProductId})  href="/updateAddCart/" class="btn btn-primary my-1">+</button>  
+                    <button  onclick=removingproduct(${element.ProductId}) href="/updateRemoveCart/${element.ProductId}" class="btn btn-primary my-1">-</button>  
+                    </div>
+                  <div class="row">
+                    <a href="/GetById/${element.ProductId}" class="btn btn-primary my-1">Details</a>  
+                    <a href="/RemoveCart/${element.ProductId}" class="btn btn-primary my-1">Remove</a>  
+                    </div>
+                </div>
+              </div>
+            </div>`
+        });
+        showCart.innerHTML=html;
+      }
+      );
+  }
+ //Plus Prouducts
+ function addingproduct(id){
+    fetch(`/updateAddCart/${id}`)
+      .then((response) =>GetCartObject())
+  }
+  
+  //Minus Products
+  function removingproduct(id){
+    fetch(`/updateRemoveCart/${id}`)
+      .then((response) =>GetCartObject())
   }
 </script>

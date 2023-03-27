@@ -57,6 +57,11 @@ router.post("/ConfirmPage", CheckUserLogin, ConfirmPagePost);
 router.get("/checkOrder/:page", CheckUserLogin, Order);
 router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
 router.get('/CancelOrder/:id',CheckUserLogin,CancelOrder);
+router.get('/GetCartdata',CheckUserLogin,GetCartdata);
+router.get('/updateAddCart/:id',CheckUserLogin,UpdateAddCart);
+router.get('/updateRemoveCart/:id',CheckUserLogin,UpdateRemoveCart);
+
+
 
 //Admin Routes
 router.post(
@@ -454,8 +459,54 @@ function productView(req, res) {
   }
 }
 
-//Open Cart
+//Open Cart with new Cart Object
 function OpenCart(req, res) {
+  try {
+    let userId = req.session.userId;
+    if (userId == "" || userId == null) {
+      res.render("Cart/Cart.ejs", {
+        message: "User have to login first",
+        username: req.session.userName,
+        role: req.session.role,
+      });
+    } else {
+      res.render("Cart/Cart.ejs", {
+        message: "",
+        username: req.session.userName,
+        role: req.session.role,
+      });
+    }
+  } catch (error) {
+    console.log('Error : ' + error);
+    res.render("Error/error.ejs");
+  }
+}
+
+//function get Cart data 
+function GetCartdata(req,res){
+  try {
+    let userId = req.session.userId;
+    if (userId == "" || userId == null) {
+      res.json({"Msg":"Invalid user Id","Cart":[]});
+    } else {
+      SqlproductService.GetAllCart(userId)
+        .then((response) => {
+          res.send({"Msg":"Success","Cart":response});
+        })
+        .catch((error) => {
+          console.log('Error : ' + error);
+          res.json({"Msg":"Something happen in backend","Cart":[]});
+        });
+    }
+  } catch (error) {
+    console.log('Error : ' + error);
+    res.json({"Msg":"Something happen in backend","Cart":[]});
+  }
+}
+
+
+//Open Cart
+function _OldCart(req, res) {
   try {
     let userId = req.session.userId;
     if (userId == "" || userId == null) {
@@ -668,6 +719,40 @@ function CancelOrder(req,res){
   }
 }
 
+//Add increments in Cart Products api
+function UpdateAddCart(req,res){
+  try {
+    let productId = req.params.id;
+    let userId = req.session.userId;
+    SqlproductService.addProductsInCart(productId,userId).then((data)=>{
+      res.send({Msg:" update cart successfully"})
+    }).catch((error)=>{
+      console.log('Error : ' + error);
+      res.send({Msg:"update cart successfully"})
+    })
+  } catch (error) {
+    console.log('Error : ' + error);
+    res.send({Msg:"Send update cart"})
+  }
+}
 
+//Add decrements in Cart Products api
+function UpdateRemoveCart(req,res){
+try {
+  let productId = req.params.id;
+  let userId = req.session.userId;
+  SqlproductService.UpdateRemoveCart(productId,userId).then((data)=>{
+       res.send({Msg:"update cart successfully"})
+     }).catch((error)=>{
+       console.log('Error : ' + error);
+ 
+       res.send({Msg:"update cart successfully"})
+     })
+  
+} catch (error) {
+  console.log('Error : ' + error);
+  res.send({Msg:"update cart successfully"})
+}
+}
 
 module.exports = router;
