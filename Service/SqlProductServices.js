@@ -298,7 +298,7 @@ async function _UpdateOrders(orderId, adminId, data) {
             }
           });
           if (product) {
-            const ProductQuantity = product.Quantity + orderProduct.Quantity;
+            const ProductQuantity = parseInt(product.Quantity) + parseInt(orderProduct.Quantity);
             UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
               (data) => {
                 //
