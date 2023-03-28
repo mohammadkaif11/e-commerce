@@ -234,7 +234,7 @@ async function GetBucketOrderById(orderId, AdminId) {
 }
 
 //Update Order
-async function _UpdateOrders(orderId, adminId, data) {
+async function UpdateOrders(orderId, adminId, data) {
   try {
     var datetime = data.date.length > 0 ? new Date(data.date) : null;
     var IsCancel = data.CancelOrder != undefined ? true : false;
@@ -377,33 +377,6 @@ async function _UpdateOrders(orderId, adminId, data) {
   }
 }
 
-//Update Order with Transaction
-async function UpdateOrders(orderId, adminId, data) {
-  try {
-    var datetime = data.date.length > 0 ? new Date(data.date) : null;
-    var IsCancel = data.CancelOrder != undefined ? true : false;
-    const pool = await ConenctedToSql();
-
-    await pool.promise().beginTransaction();
-
-    const response = await pool
-      .request()
-      .input("status", sql.Bit, 1)
-      .input("deliveryDate", sql.Date, datetime)
-      .input("orderId", sql.Int, orderId)
-      .input("adminId", sql.Int, adminId)
-      .input("message", sql.VarChar, data.Message)
-      .input("isCancel", sql.Bit, IsCancel)
-      .query(querys.UPDATEORDERS);
-
-    await pool.promise().commit();
-    console.log("Updated successfully");
-  } catch (error) {
-    await connection.promise().rollback();
-    console.log("Error : ", error);
-    return 0;
-  }
-}
 
 //Get Transaction
 async function GetAllTrans(
