@@ -274,6 +274,8 @@ async function UpdateOrders(orderId, adminId, data) {
       .input("adminId", sql.Int, adminId)
       .query(querys.GETRANSBYCHECK);
 
+    const startTransaction=await  pool.request().query('begin transaction');
+
     if (Trans.recordset.length > 0) {
       const currentDate = new Date().toDateString();
       const updateTrans = await pool
@@ -306,7 +308,6 @@ async function UpdateOrders(orderId, adminId, data) {
             );
           }
         });
-        return 1;
       } else if (IsCancel == false && Trans.recordset[0].IsCancel == true) {
         let orderProducts = JSON.parse(
           OrderProducts.recordset[0].OrderProducts
@@ -329,7 +330,6 @@ async function UpdateOrders(orderId, adminId, data) {
             );
           }
         });
-        return 1;
       }
     } else {
       const currentDate = new Date().toDateString();
@@ -368,10 +368,12 @@ async function UpdateOrders(orderId, adminId, data) {
         .input("Message", sql.VarChar, data.Message)
         .input("date", sql.Date, currentDate)
         .query(querys.CREATETRANS);
-
-      return 1;
     }
+    const endTransaction=await  pool.request().query('commit transaction');
+    return 1;
   } catch (error) {
+    const pool = await ConenctedToSql();
+    const rollbacktransaction=await  pool.request().query('rollback transaction');
     console.log("Error : ", error);
     return 0;
   }
