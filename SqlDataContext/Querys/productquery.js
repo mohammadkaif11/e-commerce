@@ -1,5 +1,6 @@
 const querys = {
     GETPRODUCTS: "SELECT * FROM [ECM].[dbo].[Products]",
+    GETPRODUCTSBYID: "SELECT * FROM [ECM].[dbo].[Products] WHERE Id=@id",
     GETADMINPRODUCTS:"SELECT * FROM [ECM].[dbo].[Products] where UserId=@userid",
     ADDPRODUCTS:"INSERT INTO [ECM].[dbo].[Products] (UserId,ProductName,ProductPrice,ProductDescription,ImageUrl,ImageKey,Quantity) VALUES (@userId,@productName,@productPrice,@productDescription,@imageUrl,@imageKey,@quantity);",
     GETPRODUCTBYID: "SELECT * FROM [ECM].[dbo].[Products] WHERE Id= @id",

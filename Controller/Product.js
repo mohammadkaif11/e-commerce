@@ -23,9 +23,12 @@ const s3 = new aws.S3({
   Bucket: BUCKET_NAME,
 });
 
+
+
 //using Local folders uploads
 // const upload = multer({ dest: "uploads/" });
 //upload middleware
+
 
 const upload = multer({
   storage: multerS3({
@@ -715,11 +718,15 @@ function UpdateAddCart(req, res) {
     let userId = req.session.userId;
     SqlproductService.addProductsInCart(productId, userId)
       .then((data) => {
-        res.send({ Msg: " update cart successfully" });
+        if(data){
+          res.json({ Msg:"update successfully",IsUpdateSuccess: true});
+        }else{
+          res.send({ Msg:"Product quantity is not enough",IsUpdateSuccess:false});
+        }
       })
       .catch((error) => {
         console.log("Error : " + error);
-        res.send({ Msg: "update cart successfully" });
+        res.json({ Msg: "update cart successfully" });
       });
   } catch (error) {
     console.log("Error : " + error);

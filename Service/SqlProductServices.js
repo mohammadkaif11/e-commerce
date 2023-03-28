@@ -666,7 +666,7 @@ async function AddtoCart(productId, user_id, adminId) {
     let obj = {
       ProductId: productId,
       AdminId: adminId,
-      Quantity:1,
+      Quantity: 1,
     };
     ObjArray.push(obj);
     let data = JSON.stringify(ObjArray);
@@ -681,7 +681,7 @@ async function AddtoCart(productId, user_id, adminId) {
     let obj = {
       ProductId: productId,
       AdminId: adminId,
-      Quantity:1,
+      Quantity: 1,
     };
     ObjArray.push(obj);
     let data = JSON.stringify(ObjArray);
@@ -816,10 +816,9 @@ async function ConfirmOrder(userId, obj) {
     let TotalItemQuantity = 0;
     let TotalPrice = 0;
 
-
     for (var j = 0; j < UniqueAdminId.length; j++) {
       //type of check whethe it is single order or not
-      if (typeof obj.ProductId  != "string") {
+      if (typeof obj.ProductId != "string") {
         for (var i = 0; i < obj.ProductId.length; i++) {
           var product = products.recordset.find((productObj) => {
             if (obj.ProductId[i] == productObj.Id) {
@@ -832,7 +831,8 @@ async function ConfirmOrder(userId, obj) {
               Quantity: obj.ProductQuantity[i],
             };
             if (product) {
-              TotalPrice +=product.ProductPrice * parseInt(obj.ProductQuantity[i]);
+              TotalPrice +=
+                product.ProductPrice * parseInt(obj.ProductQuantity[i]);
               TotalItemQuantity += parseInt(obj.ProductQuantity[i]);
               orderProducts.push(Obj);
               AdminId = obj.AdminId[i];
@@ -858,7 +858,7 @@ async function ConfirmOrder(userId, obj) {
           }
         }
       }
-    
+
       let data = JSON.stringify(orderProducts);
       const saveProducts = await pool
         .request()
@@ -1106,52 +1106,69 @@ async function updateTrans(orderId, AdminId) {
   }
 }
 
-
 //+1 in cart Products
-async function addProductsInCart(productId,userId){
+async function addProductsInCart(productId, userId) {
   const pool = await ConenctedToSql();
+  let flag = 0;
 
   let UserCartExist = await pool
-  .request()
-  .input("userId", sql.Int, userId)
-  .query(querys.CECKUSERINCART);
+    .request()
+    .input("userId", sql.Int, userId)
+    .query(querys.CECKUSERINCART);
+
+  const products = await pool
+    .request()
+    .input("id", sql.Int, productId)
+    .query(querys.GETPRODUCTBYID);
+  let product = products.recordset;
+
   if (UserCartExist.recordset.length > 0) {
     let ProductCarts = UserCartExist.recordset[0].CartProducts;
     let ObjArray = JSON.parse(ProductCarts);
-    ObjArray.map(function(element){
-      if(element.ProductId==productId){
-        element.Quantity=element.Quantity+1;
+    ObjArray.map(function (element) {
+      if (element.ProductId == productId) {
+        if (product[0].Quantity < element.Quantity + 1) {
+          Msg = "Product quantity is not enough";
+          return false;
+        } else {
+          element.Quantity = element.Quantity + 1;
+          flag = 1;
+        }
       }
-    })
-    let data = JSON.stringify(ObjArray);
-    const response = await pool
-      .request()
-      .input("cartProducts", sql.VarChar, data)
-      .input("userId", sql.Int, userId)
-      .query(querys.UPDATECART);
-    return response.rowsAffected[0];
+    });
+    if (flag == 1) {
+      let data = JSON.stringify(ObjArray);
+      const response = await pool
+        .request()
+        .input("cartProducts", sql.VarChar, data)
+        .input("userId", sql.Int, userId)
+        .query(querys.UPDATECART);
+      Msg = "Increment Product quantity with 1";
+      return true;
+    }
   }
+  Msg = "User cart does not exist";
+  return false;
 }
 
 //-1 in cart Products
-async function UpdateRemoveCart(productId,userId){
+async function UpdateRemoveCart(productId, userId) {
   const pool = await ConenctedToSql();
 
   let UserCartExist = await pool
-  .request()
-  .input("userId", sql.Int, userId)
-  .query(querys.CECKUSERINCART);
+    .request()
+    .input("userId", sql.Int, userId)
+    .query(querys.CECKUSERINCART);
   if (UserCartExist.recordset.length > 0) {
     let ProductCarts = UserCartExist.recordset[0].CartProducts;
     let ObjArray = JSON.parse(ProductCarts);
-    ObjArray.map(function(element){
-      if(element.ProductId==productId){
-        if(element.Quantity>1)
-        {
-          element.Quantity=element.Quantity-1;
+    ObjArray.map(function (element) {
+      if (element.ProductId == productId) {
+        if (element.Quantity > 1) {
+          element.Quantity = element.Quantity - 1;
         }
       }
-    })
+    });
     let data = JSON.stringify(ObjArray);
     const response = await pool
       .request()
@@ -1161,11 +1178,6 @@ async function UpdateRemoveCart(productId,userId){
     return response.rowsAffected[0];
   }
 }
-
-
-
-
-
 
 module.exports = {
   AddProduct,
@@ -1187,5 +1199,5 @@ module.exports = {
   GetAllTrans,
   CancelOrder,
   addProductsInCart,
-  UpdateRemoveCart
+  UpdateRemoveCart,
 };

@@ -25,10 +25,11 @@
       <% if (message.length > 0) { %>
       <div class="alert alert-danger"><%= message %></div>
       <% } %>
-      <div class="row container-fluid" id="showCart">
+      <div id="msgdisplay" style="display: none;" class="alert alert-danger" role="alert">Product Quantity cannot increment</div>  
 
-      </div>
+      <div class="row container-fluid" id="showCart"></div>
     </div>
+    
     <script
       src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
       integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
@@ -48,64 +49,73 @@
 </html>
 
 <script>
-  GetCartObject();
+   GetCartObject();
 
-  //Place Order 
-  function PlaceOrder() {
-    confirm("Confirm?");
-    window.location.href = "/ConfirmPage";
-  }
+   //Place Order
+   function PlaceOrder() {
+     confirm("Confirm?");
+     window.location.href = "/ConfirmPage";
+   }
 
-  //Get Cart Object
-  function GetCartObject() {
+   //Get Cart Object
+   function GetCartObject() {
 
-    var showCart = document.getElementById('showCart');
-    fetch("/GetCartdata")
-      .then((response) => response.json())
-      .then((data) => {
-        let html="";
-        data.Cart.forEach(element => {
-            html+=`<div class="col-3  my-2">
-              <div class="card" style="width: 18rem;">
-                <img height="300px" width="200px" src="${element.ImageUrl}" class="card-img-top" alt="...">
-                <div class="card-body">
-                  <h5 class="card-title">Name:${element.ProductName }</h5>
-                  <span style="font-weight: bold;">Price:${element.ProductPrice}</span>
-                  <span style="font-weight: bold;">Quantity:${element.Quantity}</span>
-                  <div class="row">
-                    <button onclick=addingproduct(${element.ProductId})   class="btn btn-primary my-1">+</button>  
-                    <button  onclick=removingproduct(${element.ProductId})  class="btn btn-primary my-1">-</button>  
-                    </div>
-                  <div class="row">
-                    <a href="/GetById/${element.ProductId}" class="btn btn-primary my-1">Details</a>  
-                    <button onclick=removefromcart(${element.ProductId})  class="btn btn-primary my-1">Remove</button>  
-                    </div>
-                </div>
-              </div>
-            </div>`
-        });
-        showCart.innerHTML=html;
-      }
-      );
-  }
- 
-  //Plus Prouducts
- function addingproduct(id){
-    fetch(`/updateAddCart/${id}`)
-      .then((response) =>GetCartObject())
-  }
-  
-  //Minus Products
-  function removingproduct(id){
-    fetch(`/updateRemoveCart/${id}`)
-      .then((response) =>GetCartObject())
-  }
+     var showCart = document.getElementById('showCart');
+     fetch("/GetCartdata")
+       .then((response) => response.json())
+       .then((data) => {
+         let html="";
+         data.Cart.forEach(element => {
+             html+=`<div class="col-3  my-2">
+               <div class="card" style="width: 18rem;">
+                 <img height="300px" width="200px" src="${element.ImageUrl}" class="card-img-top" alt="...">
+                 <div class="card-body">
+                   <h5 class="card-title">Name:${element.ProductName }</h5>
+                   <span style="font-weight: bold;">Price:${element.ProductPrice}</span>
+                   <span style="font-weight: bold;">Quantity:${element.Quantity}</span>
+                   <div class="row">
+                     <button onclick=addingproduct(${element.ProductId})   class="btn btn-primary my-1">+</button>
+                     <button  onclick=removingproduct(${element.ProductId})  class="btn btn-primary my-1">-</button>
+                     </div>
+                   <div class="row">
+                     <a href="/GetById/${element.ProductId}" class="btn btn-primary my-1">Details</a>
+                     <button onclick=removefromcart(${element.ProductId})  class="btn btn-primary my-1">Remove</button>
+                     </div>
+                 </div>
+               </div>
+             </div>`
+         });
+         showCart.innerHTML=html;
+       }
+       );
+   }
 
-  //Rempve from Carts
-  function removefromcart(id){
-    fetch(`/RemoveCart/${id}`)
-      .then((response) =>GetCartObject())
-  }
+   //Plus Prouducts
+  function addingproduct(id){
+     fetch(`/updateAddCart/${id}`).then(result => result.json())
+        .then(data => {
+            if(data.IsUpdateSuccess==false){
+               let msgdisplay=document.getElementById('msgdisplay');
+               msgdisplay.style.display='block';
+               setTimeout(() => {
+                msgdisplay.style.display='none';
+               }, 2000);
+            }else{
+              GetCartObject();
+            }
+        })
+       
+   }
 
+   //Minus Products
+   function removingproduct(id){
+     fetch(`/updateRemoveCart/${id}`)
+       .then((response) =>GetCartObject())
+   }
 
+   //Rempve from Carts
+   function removefromcart(id){
+     fetch(`/RemoveCart/${id}`)
+       .then((response) =>GetCartObject())
+   }
 </script>
