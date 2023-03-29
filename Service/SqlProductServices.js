@@ -84,79 +84,80 @@ async function DeleteProduct(id, UserId) {
   return response.rowsAffected[0];
 }
 
-//SQL GET OpenBucket for Admin
-async function Old_OpenBucketAdmin(AdminId, page_number) {
-  const page_size = 5;
-  let OrderArray = [];
-  let OrderProductArray = [];
-  let ProductArray = [];
+// //SQL GET OpenBucket for Admin
 
-  const pool = await ConenctedToSql();
+// async function Old_OpenBucketAdmin(AdminId, page_number) {
+//   const page_size = 5;
+//   let OrderArray = [];
+//   let OrderProductArray = [];
+//   let ProductArray = [];
 
-  const Orders = await pool.request().query(querys.GETALLORDER);
-  const Products = await pool.request().query(querys.GETPRODUCTS);
-  const OrdersProdcuts = await pool
-    .request()
-    .input("adminId", sql.Int, AdminId)
-    .query(querys.GETORDERPRODUCTSADMIN);
+//   const pool = await ConenctedToSql();
 
-  OrderArray = Orders.recordset;
-  OrderProductArray = OrdersProdcuts.recordset;
-  ProductArray = Products.recordset;
+//   const Orders = await pool.request().query(querys.GETALLORDER);
+//   const Products = await pool.request().query(querys.GETPRODUCTS);
+//   const OrdersProdcuts = await pool
+//     .request()
+//     .input("adminId", sql.Int, AdminId)
+//     .query(querys.GETORDERPRODUCTSADMIN);
 
-  var responsObj = [];
-  OrderArray.forEach((order) => {
-    const OrderProduct = OrderProductArray.filter((Element) => {
-      if (Element.OrderId == order.Id) {
-        return Element;
-      }
-    });
-    if (OrderProduct.length > 0) {
-      let TotalAmount = 0;
-      OrderProduct.forEach((orp) => {
-        var product = ProductArray.find(function (element) {
-          if (element.Id == orp.ProductId) {
-            return element;
-          }
-        });
-        orp.ProductName = product.ProductName;
-        orp.ProductPrice = product.ProductPrice;
-        orp.ProductDescription = product.ProductDescription;
-        orp.ImageUrl = product.ImageUrl;
-        orp.ProductTotal = orp.Quantity * product.ProductPrice;
-        TotalAmount = TotalAmount + orp.Quantity * product.ProductPrice;
-      });
+//   OrderArray = Orders.recordset;
+//   OrderProductArray = OrdersProdcuts.recordset;
+//   ProductArray = Products.recordset;
 
-      order.OrderProducts = OrderProduct;
-      order.TotalAmount = TotalAmount;
-      order.Date = new Date(order.Date).toDateString();
-      responsObj.push(order);
-    }
+//   var responsObj = [];
+//   OrderArray.forEach((order) => {
+//     const OrderProduct = OrderProductArray.filter((Element) => {
+//       if (Element.OrderId == order.Id) {
+//         return Element;
+//       }
+//     });
+//     if (OrderProduct.length > 0) {
+//       let TotalAmount = 0;
+//       OrderProduct.forEach((orp) => {
+//         var product = ProductArray.find(function (element) {
+//           if (element.Id == orp.ProductId) {
+//             return element;
+//           }
+//         });
+//         orp.ProductName = product.ProductName;
+//         orp.ProductPrice = product.ProductPrice;
+//         orp.ProductDescription = product.ProductDescription;
+//         orp.ImageUrl = product.ImageUrl;
+//         orp.ProductTotal = orp.Quantity * product.ProductPrice;
+//         TotalAmount = TotalAmount + orp.Quantity * product.ProductPrice;
+//       });
 
-    order.Status = OrderProduct[0]?.Status;
-    if (OrderProduct[0]?.DeliveryDate != null) {
-      order.DeliveryDate = new Date(
-        OrderProduct[0]?.DeliveryDate
-      ).toDateString();
-    }
-    order.IsCancel = OrderProduct[0]?.IsCancel;
-  });
+//       order.OrderProducts = OrderProduct;
+//       order.TotalAmount = TotalAmount;
+//       order.Date = new Date(order.Date).toDateString();
+//       responsObj.push(order);
+//     }
 
-  responsObj.sort(function (a, b) {
-    return b.Id - a.Id;
-  });
+//     order.Status = OrderProduct[0]?.Status;
+//     if (OrderProduct[0]?.DeliveryDate != null) {
+//       order.DeliveryDate = new Date(
+//         OrderProduct[0]?.DeliveryDate
+//       ).toDateString();
+//     }
+//     order.IsCancel = OrderProduct[0]?.IsCancel;
+//   });
 
-  var lengthOfOrder = responsObj.length;
-  const BucketObject = {
-    data: responsObj.slice(
-      (page_number - 1) * page_size,
-      page_number * page_size
-    ),
-    current: parseInt(page_number),
-    pages: Math.ceil(lengthOfOrder / page_size),
-  };
-  return BucketObject;
-}
+//   responsObj.sort(function (a, b) {
+//     return b.Id - a.Id;
+//   });
+
+//   var lengthOfOrder = responsObj.length;
+//   const BucketObject = {
+//     data: responsObj.slice(
+//       (page_number - 1) * page_size,
+//       page_number * page_size
+//     ),
+//     current: parseInt(page_number),
+//     pages: Math.ceil(lengthOfOrder / page_size),
+//   };
+//   return BucketObject;
+// }
 
 //SQL GET OpenBucket for Admin------------------------
 async function OpenBucketAdmin(AdminId, pageNumber) {
@@ -168,6 +169,8 @@ async function OpenBucketAdmin(AdminId, pageNumber) {
     .input("Page", sql.Int, pageNumber)
     .input("Size", sql.Int, pagesize)
     .execute("sp_getAdminBucket");
+
+  //Logic for Status Message
   response.recordset.forEach(function (elements) {
     elements.Date = new Date(elements.Date).toDateString();
     if (elements.DeliveryDate != null) {
@@ -183,6 +186,8 @@ async function OpenBucketAdmin(AdminId, pageNumber) {
       }
     }
   });
+
+  //get total number of orders for seller
   const totalOrderProducts = await pool
     .request()
     .input("adminId", sql.Int, AdminId)
@@ -200,6 +205,8 @@ async function OpenBucketAdmin(AdminId, pageNumber) {
 //SQL GET bucket order by Id
 async function GetBucketOrderById(orderId, AdminId) {
   const pool = await ConenctedToSql();
+
+  //get total number of products
   const products = await pool.request().query(querys.GETPRODUCTS);
 
   const response = await pool
@@ -208,6 +215,7 @@ async function GetBucketOrderById(orderId, AdminId) {
     .input("OrderId", sql.Int, orderId)
     .execute("sp_getAdminOrder");
 
+  //map products order images and name of products by id
   response.recordset.forEach(function (elements) {
     elements.Date = new Date(elements.Date).toDateString();
     let OrderProducts = JSON.parse(elements.OrderProducts);
@@ -233,7 +241,7 @@ async function GetBucketOrderById(orderId, AdminId) {
   return response.recordset;
 }
 
-//Update Order
+//Update Order with  database transaction
 async function UpdateOrders(orderId, adminId, data) {
   try {
     var datetime = data.date.length > 0 ? new Date(data.date) : null;
@@ -274,111 +282,135 @@ async function UpdateOrders(orderId, adminId, data) {
       .input("adminId", sql.Int, adminId)
       .query(querys.GETRANSBYCHECK);
 
-    const startTransaction=await  pool.request().query('begin transaction');
+    //start Transaction
+    const transaction = new sql.Transaction();
 
-    if (Trans.recordset.length > 0) {
-      const currentDate = new Date().toDateString();
-      const updateTrans = await pool
-        .request()
-        .input("orderId", sql.Int, Trans.recordset[0].OrderId)
-        .input("adminId", sql.Int, Trans.recordset[0].AdminId)
-        .input("id", sql.Int, Trans.recordset[0].Id)
-        .input("message", sql.VarChar, data.Message)
-        .input("isCancel", sql.Bit, IsCancel)
-        .input("date", sql.Date, currentDate)
-        .query(querys.UPDATETRANS);
+    transaction.begin(async (err) => {
+      console.log("Transaction start successfully");
+      if (err) {
+        transaction.rollback((err) => {
+          console.log("Transaction rollback successfully");
+        });
+        console.log("Transaction begin error ", err);
+        return 0;
+      }
+      if (Trans.recordset.length > 0) {
+        const currentDate = new Date().toDateString();
+        const updateTrans = await pool
+          .request()
+          .input("orderId", sql.Int, Trans.recordset[0].OrderId)
+          .input("adminId", sql.Int, Trans.recordset[0].AdminId)
+          .input("id", sql.Int, Trans.recordset[0].Id)
+          .input("message", sql.VarChar, data.Message)
+          .input("isCancel", sql.Bit, IsCancel)
+          .input("date", sql.Date, currentDate)
+          .query(querys.UPDATETRANS);
 
-      if (IsCancel == true && Trans.recordset[0].IsCancel == false) {
-        let orderProducts = JSON.parse(
-          OrderProducts.recordset[0].OrderProducts
-        );
+        if (IsCancel == true && Trans.recordset[0].IsCancel == false) {
+          let orderProducts = JSON.parse(
+            OrderProducts.recordset[0].OrderProducts
+          );
 
-        orderProducts.forEach(function (orderProduct) {
-          let product = Products.recordset.find(function (product) {
-            if (orderProduct.ProductId == product.Id) {
-              return product;
+          orderProducts.forEach(function (orderProduct) {
+            let product = Products.recordset.find(function (product) {
+              if (orderProduct.ProductId == product.Id) {
+                return product;
+              }
+            });
+            if (product) {
+              const ProductQuantity =
+                parseInt(product.Quantity) + parseInt(orderProduct.Quantity);
+              UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
+                (data) => {
+                  // console.log(data);
+                }
+              );
             }
           });
-          if (product) {
-            const ProductQuantity = parseInt(product.Quantity) + parseInt(orderProduct.Quantity);
-            UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
-              (data) => {
-                //
+        } else if (IsCancel == false && Trans.recordset[0].IsCancel == true) {
+          let orderProducts = JSON.parse(
+            OrderProducts.recordset[0].OrderProducts
+          );
+
+          //update The prouduct Quantity to minus
+          orderProducts.forEach(function (orderProduct) {
+            var product = Products.recordset.find(function (product) {
+              if (orderProduct.ProductId == product.Id) {
+                return product;
               }
-            );
-          }
-        });
-      } else if (IsCancel == false && Trans.recordset[0].IsCancel == true) {
+            });
+            //product is not undefined
+            if (product) {
+              const ProductQuantity = product.Quantity - orderProduct.Quantity;
+              UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
+                (data) => {
+                  // console.log(data);
+                }
+              );
+            }
+          });
+        }
+      } else {
+        const currentDate = new Date().toDateString();
+        let ModeOfpayment = order.recordset[0].ModePayment;
         let orderProducts = JSON.parse(
           OrderProducts.recordset[0].OrderProducts
         );
 
-        //update The prouduct Quantity to minus
         orderProducts.forEach(function (orderProduct) {
           var product = Products.recordset.find(function (product) {
             if (orderProduct.ProductId == product.Id) {
               return product;
             }
           });
-          //product is not undefined
+
           if (product) {
-            const ProductQuantity = product.Quantity - orderProduct.Quantity;
-            UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
-              (data) => {
-                // console.log(data);
-              }
-            );
+            if (IsCancel == false) {
+              const ProductQuantity = product.Quantity - orderProduct.Quantity;
+              UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
+                (data) => {
+                  // console.log(data);
+                }
+              );
+            }
           }
         });
+        const CreateTrans = await pool
+          .request()
+          .input("adminId", sql.Int, adminId)
+          .input("orderId", sql.Int, orderId)
+          .input(
+            "totalAmount",
+            sql.Decimal,
+            OrderProducts.recordset[0].TotalAmount
+          )
+          .input("paymentMode", sql.VarChar, ModeOfpayment)
+          .input("isCancel", sql.Bit, IsCancel)
+          .input("Message", sql.VarChar, data.Message)
+          .input("date", sql.Date, currentDate)
+          .query(querys.CREATETRANS);
       }
-    } else {
-      const currentDate = new Date().toDateString();
-      let ModeOfpayment = order.recordset[0].ModePayment;
-      let orderProducts = JSON.parse(OrderProducts.recordset[0].OrderProducts);
 
-      orderProducts.forEach(function (orderProduct) {
-        var product = Products.recordset.find(function (product) {
-          if (orderProduct.ProductId == product.Id) {
-            return product;
-          }
-        });
-
-        if (product) {
-          if (IsCancel == false) {
-            const ProductQuantity = product.Quantity - orderProduct.Quantity;
-            UpdateProductQuantity(product.Id, ProductQuantity, adminId).then(
-              (data) => {
-                // console.log(data);
-              }
-            );
-          }
+      transaction.commit((err) => {
+        if (err) {
+          transaction.rollback((err) => {
+            console.log("Transaction rollback successfully");
+          });
+          return 0;
         }
+        console.log("Transaction committed successfully");
       });
-      const CreateTrans = await pool
-        .request()
-        .input("adminId", sql.Int, adminId)
-        .input("orderId", sql.Int, orderId)
-        .input(
-          "totalAmount",
-          sql.Decimal,
-          OrderProducts.recordset[0].TotalAmount
-        )
-        .input("paymentMode", sql.VarChar, ModeOfpayment)
-        .input("isCancel", sql.Bit, IsCancel)
-        .input("Message", sql.VarChar, data.Message)
-        .input("date", sql.Date, currentDate)
-        .query(querys.CREATETRANS);
-    }
-    const endTransaction=await  pool.request().query('commit transaction');
+    });
+    //end Transaction
     return 1;
   } catch (error) {
-    const pool = await ConenctedToSql();
-    const rollbacktransaction=await  pool.request().query('rollback transaction');
     console.log("Error : ", error);
+    transaction.rollback((err) => {
+      console.log("transaction rolled back successfully");
+    });
     return 0;
   }
 }
-
 
 //Get Transaction
 async function GetAllTrans(
@@ -416,13 +448,14 @@ async function GetAllTrans(
       .input("Size", sql.Int, pagesize)
       .execute("sp_GetTransaction");
 
+    //get total transactions for seller
     const TotalTransaction = await pool
       .request()
       .query(`select Count(*) as Total from trans where AdminId=${adminId}`);
     const TotalTransactionNo = TotalTransaction.recordset[0].Total;
     const transaction = response.recordset;
 
-    //convert date to time
+    //convert datetime to string
     transaction.forEach(function (element) {
       element.Date = new Date(element.Date).toDateString();
       element.OrderDate = new Date(element.OrderDate).toDateString();
@@ -454,12 +487,16 @@ async function GetOrder(userId, page_number) {
   let pagesize = 5;
   const pool = await ConenctedToSql();
   const products = await pool.request().query(querys.GETPRODUCTS);
+
+  //get Total Order
   const TotalOrder = await pool
     .request()
     .input("userId", sql.Int, userId)
     .query(querys.GETTOTALORDERSBYUSER);
+
   let TotalOrderTotal = TotalOrder.recordset[0].TOTAL;
 
+  //get UserOrder
   const response = await pool
     .request()
     .input("UserId", sql.Int, userId)
@@ -536,12 +573,13 @@ async function GetOrder(userId, page_number) {
   //Delivery Date and Status Update
   for (let i = 0; i < ResponseObj.length; i++) {
     let TempProducts = ResponseObj[i].Products;
+
     for (let i = 0; i < TempProducts.length; i++) {
       if (TempProducts[i].Status == null) {
         Status = false;
       }
       if (
-        TempProducts[i].DeliveryDate !== null ||
+        TempProducts[i].DeliveryDate !== null &&
         new Date(TempProducts[i].DeliveryDate) > new Date(DeliveryDate)
       ) {
         DeliveryDate = new Date(TempProducts[i].DeliveryDate).toDateString();
@@ -560,7 +598,7 @@ async function GetOrder(userId, page_number) {
       ResponseObj[i].OrderStatus = "Updated";
     } else if (Status == true && DeliveryDate == null) {
       ResponseObj[i].DeliveryDate = null;
-      ResponseObj[i].IsAllStatusUpdate = false;
+      ResponseObj[i].IsAllStatusUpdate = true;
       ResponseObj[i].Message = "seller  Cancel Your Order";
       ResponseObj[i].OrderStatus = "Updated";
     } else {
@@ -770,265 +808,319 @@ async function GetProductByPagination(page, productName, priceRange, callback) {
   callback(obj);
 }
 
-//confirm Order
+//confirm Order with Transaction
 async function ConfirmOrder(userId, obj) {
   try {
     let UniqueAdminId = [...new Set(obj.AdminId)];
     var datetime = new Date();
     const pool = await ConenctedToSql();
     const products = await pool.request().query(querys.GETPRODUCTS);
-    const response = await pool
-      .request()
-      .input("userId", sql.Int, userId)
-      .input("address", sql.VarChar, obj.Address)
-      .input("pincode", sql.VarChar, obj.Pincode)
-      .input("date", sql.Date, datetime)
-      .input("modePayment", sql.VarChar, obj.modeOfPayment)
-      .query(querys.ADDORDER);
 
-    const OrderId = response.recordset[0].SCOPE_IDENTITY;
-    let orderProducts = [];
-    let TotalItemQuantity = 0;
-    let TotalPrice = 0;
+    const transaction = new sql.Transaction();
+    transaction.begin(async (err) => {
+      console.log("Transaction start successfully");
+      if (err) {
+        transaction.rollback((err) => {
+          console.log("Transaction rollback successfully");
+        });
+        console.log("Transaction begin error ", err);
+        return 0;
+      }
+      const response = await pool
+        .request()
+        .input("userId", sql.Int, userId)
+        .input("address", sql.VarChar, obj.Address)
+        .input("pincode", sql.VarChar, obj.Pincode)
+        .input("date", sql.Date, datetime)
+        .input("modePayment", sql.VarChar, obj.modeOfPayment)
+        .query(querys.ADDORDER);
 
-    for (var j = 0; j < UniqueAdminId.length; j++) {
-      //type of check whethe it is single order or not
-      if (typeof obj.ProductId != "string") {
-        for (var i = 0; i < obj.ProductId.length; i++) {
+      const OrderId = response.recordset[0].SCOPE_IDENTITY;
+      let orderProducts = [];
+      let TotalItemQuantity = 0;
+      let TotalPrice = 0;
+
+      for (var j = 0; j < UniqueAdminId.length; j++) {
+        //type of check whethe it is single order or not
+        if (typeof obj.ProductId != "string") {
+          for (var i = 0; i < obj.ProductId.length; i++) {
+            var product = products.recordset.find((productObj) => {
+              if (obj.ProductId[i] == productObj.Id) {
+                return productObj;
+              }
+            });
+            if (obj.AdminId[i] == UniqueAdminId[j]) {
+              let Obj = {
+                ProductId: obj.ProductId[i],
+                Quantity: obj.ProductQuantity[i],
+              };
+              if (product) {
+                TotalPrice +=
+                  product.ProductPrice * parseInt(obj.ProductQuantity[i]);
+                TotalItemQuantity += parseInt(obj.ProductQuantity[i]);
+                orderProducts.push(Obj);
+                AdminId = obj.AdminId[i];
+              }
+            }
+          }
+        } else {
           var product = products.recordset.find((productObj) => {
-            if (obj.ProductId[i] == productObj.Id) {
+            if (obj.ProductId == productObj.Id) {
               return productObj;
             }
           });
-          if (obj.AdminId[i] == UniqueAdminId[j]) {
+          if (obj.AdminId == UniqueAdminId[0]) {
             let Obj = {
-              ProductId: obj.ProductId[i],
-              Quantity: obj.ProductQuantity[i],
+              ProductId: obj.ProductId,
+              Quantity: obj.ProductQuantity,
             };
             if (product) {
               TotalPrice +=
-                product.ProductPrice * parseInt(obj.ProductQuantity[i]);
-              TotalItemQuantity += parseInt(obj.ProductQuantity[i]);
+                product.ProductPrice * parseInt(obj.ProductQuantity);
+              TotalItemQuantity += parseInt(obj.ProductQuantity);
               orderProducts.push(Obj);
-              AdminId = obj.AdminId[i];
+              AdminId = obj.AdminId;
             }
           }
         }
-      } else {
-        var product = products.recordset.find((productObj) => {
-          if (obj.ProductId == productObj.Id) {
-            return productObj;
-          }
-        });
-        if (obj.AdminId == UniqueAdminId[0]) {
-          let Obj = {
-            ProductId: obj.ProductId,
-            Quantity: obj.ProductQuantity,
-          };
-          if (product) {
-            TotalPrice += product.ProductPrice * parseInt(obj.ProductQuantity);
-            TotalItemQuantity += parseInt(obj.ProductQuantity);
-            orderProducts.push(Obj);
-            AdminId = obj.AdminId;
-          }
-        }
+
+        let data = JSON.stringify(orderProducts);
+        const saveProducts = await pool
+          .request()
+          .input("orderId", sql.Int, OrderId)
+          .input("orderProducts", sql.VarChar, data)
+          .input("adminId", sql.Int, UniqueAdminId[j])
+          .input("totalAmount", sql.Int, TotalPrice)
+          .input("totalItemQuantity", sql.Int, TotalItemQuantity)
+          .query(querys.ADDORDERPRODUCTS);
+        orderProducts = [];
+        TotalItemQuantity = 0;
+        TotalPrice = 0;
       }
 
-      let data = JSON.stringify(orderProducts);
-      const saveProducts = await pool
+      const placedOrder = await pool
         .request()
-        .input("orderId", sql.Int, OrderId)
-        .input("orderProducts", sql.VarChar, data)
-        .input("adminId", sql.Int, UniqueAdminId[j])
-        .input("totalAmount", sql.Int, TotalPrice)
-        .input("totalItemQuantity", sql.Int, TotalItemQuantity)
-        .query(querys.ADDORDERPRODUCTS);
-      orderProducts = [];
-      TotalItemQuantity = 0;
-      TotalPrice = 0;
-    }
-
-    const placedOrder = await pool
-      .request()
-      .input("userId", sql.Int, userId)
-      .query(querys.PLACEORDER);
-
-    return placedOrder.rowsAffected[0];
+        .input("userId", sql.Int, userId)
+        .query(querys.PLACEORDER);
+      transaction.commit((err) => {
+        if (err) {
+          transaction.rollback((err) => {
+            console.log("Transaction rollback successfully");
+          });
+          return 0;
+        }
+        console.log("Transaction committed successfully");
+      });
+      return placedOrder.rowsAffected[0];
+    });
   } catch (error) {
+    transaction.rollback((err) => {
+      console.log("transaction rolled back successfully");
+    });
     console.log("Error : " + error.message);
+    return 0;
   }
 }
 
 //SQL GET ORDER FOR USER with pagination
-async function Old_GetOrder(userId, page_number) {
-  let OrderArray = [];
-  let OrderProductArray = [];
-  let ProductArray = [];
+// async function Old_GetOrder(userId, page_number) {
+//   let OrderArray = [];
+//   let OrderProductArray = [];
+//   let ProductArray = [];
 
-  const page_size = 5;
-  const pool = await ConenctedToSql();
+//   const page_size = 5;
+//   const pool = await ConenctedToSql();
 
-  //Getall Admin Order
-  const Orders = await pool
-    .request()
-    .input("userId", sql.Int, userId)
-    .query(querys.GETORDER);
+//   //Getall Admin Order
+//   const Orders = await pool
+//     .request()
+//     .input("userId", sql.Int, userId)
+//     .query(querys.GETORDER);
 
-  //Get All OrderProducts
-  const OrdersProdcuts = await pool.request().query(querys.GETORDERPRODUCTS);
+//   //Get All OrderProducts
+//   const OrdersProdcuts = await pool.request().query(querys.GETORDERPRODUCTS);
 
-  //Get All Products
-  const Products = await pool.request().query(querys.GETPRODUCTS);
+//   //Get All Products
+//   const Products = await pool.request().query(querys.GETPRODUCTS);
 
-  OrderArray = Orders.recordset;
-  OrderProductArray = OrdersProdcuts.recordset;
-  ProductArray = Products.recordset;
+//   OrderArray = Orders.recordset;
+//   OrderProductArray = OrdersProdcuts.recordset;
+//   ProductArray = Products.recordset;
 
-  OrderArray.forEach((order) => {
-    //Get OrderProducts by Id
-    const OrderProduct = OrderProductArray.filter((Element) => {
-      if (Element.OrderId == order.Id) {
-        return Element;
-      }
-    });
+//   OrderArray.forEach((order) => {
+//     //Get OrderProducts by Id
+//     const OrderProduct = OrderProductArray.filter((Element) => {
+//       if (Element.OrderId == order.Id) {
+//         return Element;
+//       }
+//     });
 
-    let TotalAmount = 0;
-    let DeliveryDate = null;
-    let OrderStatus = false;
-    let flag_CheckOrderStatus = true;
-    let CancelOrder = 0;
+//     let TotalAmount = 0;
+//     let DeliveryDate = null;
+//     let OrderStatus = false;
+//     let flag_CheckOrderStatus = true;
+//     let CancelOrder = 0;
 
-    OrderProduct.forEach((orp) => {
-      //get Product with product Id
-      var product = ProductArray.find(function (element) {
-        if (element.Id == orp.ProductId) {
-          return element;
-        }
-      });
+//     OrderProduct.forEach((orp) => {
+//       //get Product with product Id
+//       var product = ProductArray.find(function (element) {
+//         if (element.Id == orp.ProductId) {
+//           return element;
+//         }
+//       });
 
-      if (orp.IsCancel == true) {
-        CancelOrder = CancelOrder + 1;
-      }
+//       if (orp.IsCancel == true) {
+//         CancelOrder = CancelOrder + 1;
+//       }
 
-      //Changing Status
-      if (orp.Status != null || orp.Status == true) {
-        OrderStatus = true;
-      } else {
-        OrderStatus = false;
-        flag_CheckOrderStatus = false;
-      }
+//       //Changing Status
+//       if (orp.Status != null || orp.Status == true) {
+//         OrderStatus = true;
+//       } else {
+//         OrderStatus = false;
+//         flag_CheckOrderStatus = false;
+//       }
 
-      //changing Delivery Date
-      if (orp.DeliveryDate != null) {
-        if (DeliveryDate == null) {
-          DeliveryDate = orp.DeliveryDate;
-        }
-        if (
-          new Date(DeliveryDate).getTime() <
-          new Date(orp.DeliveryDate).getTime()
-        ) {
-          DeliveryDate = orp.DeliveryDate;
-        }
-      } else {
-        DeliveryDate = null;
-      }
+//       //changing Delivery Date
+//       if (orp.DeliveryDate != null) {
+//         if (DeliveryDate == null) {
+//           DeliveryDate = orp.DeliveryDate;
+//         }
+//         if (
+//           new Date(DeliveryDate).getTime() <
+//           new Date(orp.DeliveryDate).getTime()
+//         ) {
+//           DeliveryDate = orp.DeliveryDate;
+//         }
+//       } else {
+//         DeliveryDate = null;
+//       }
 
-      //adding product details
-      orp.ProductName = product.ProductName;
-      orp.ProductPrice = product.ProductPrice;
-      orp.ProductDescription = product.ProductDescription;
-      orp.ImageUrl = product.ImageUrl;
-      orp.ProductTotal = orp.Quantity * product.ProductPrice;
-      TotalAmount = TotalAmount + orp.Quantity * product.ProductPrice;
-    });
+//       //adding product details
+//       orp.ProductName = product.ProductName;
+//       orp.ProductPrice = product.ProductPrice;
+//       orp.ProductDescription = product.ProductDescription;
+//       orp.ImageUrl = product.ImageUrl;
+//       orp.ProductTotal = orp.Quantity * product.ProductPrice;
+//       TotalAmount = TotalAmount + orp.Quantity * product.ProductPrice;
+//     });
 
-    order.OrderProducts = OrderProduct;
-    order.TotalAmount = TotalAmount;
-    order.Date = new Date(order.Date).toDateString();
+//     order.OrderProducts = OrderProduct;
+//     order.TotalAmount = TotalAmount;
+//     order.Date = new Date(order.Date).toDateString();
 
-    if (flag_CheckOrderStatus == true) {
-      if (CancelOrder == OrderProduct.length) {
-        order.Status = OrderStatus;
-        order.DeliveryDate = null;
-        order.AllCancel = true;
-        order.AllPass = false;
-      } else {
-        if (CancelOrder == 0) {
-          order.AllPass = true;
-          order.AllCancel = false;
-          order.Status = OrderStatus;
-          order.DeliveryDate = new Date(DeliveryDate).toDateString();
-        } else {
-          order.AllPass = false;
-          order.AllCancel = false;
-          order.Status = OrderStatus;
-          order.DeliveryDate = new Date(DeliveryDate).toDateString();
-        }
-      }
-    } else {
-      order.Status = false;
-      order.DeliveryDate = null;
-    }
-  });
+//     if (flag_CheckOrderStatus == true) {
+//       if (CancelOrder == OrderProduct.length) {
+//         order.Status = OrderStatus;
+//         order.DeliveryDate = null;
+//         order.AllCancel = true;
+//         order.AllPass = false;
+//       } else {
+//         if (CancelOrder == 0) {
+//           order.AllPass = true;
+//           order.AllCancel = false;
+//           order.Status = OrderStatus;
+//           order.DeliveryDate = new Date(DeliveryDate).toDateString();
+//         } else {
+//           order.AllPass = false;
+//           order.AllCancel = false;
+//           order.Status = OrderStatus;
+//           order.DeliveryDate = new Date(DeliveryDate).toDateString();
+//         }
+//       }
+//     } else {
+//       order.Status = false;
+//       order.DeliveryDate = null;
+//     }
+//   });
 
-  //Sort the Order
-  OrderArray.sort(function (a, b) {
-    return b.Id - a.Id;
-  });
+//   //Sort the Order
+//   OrderArray.sort(function (a, b) {
+//     return b.Id - a.Id;
+//   });
 
-  //length Or Order
-  var lengthOfOrder = OrderArray.length;
+//   //length Or Order
+//   var lengthOfOrder = OrderArray.length;
 
-  //obj
-  const OrderObj = {
-    Order: OrderArray.slice(
-      (page_number - 1) * page_size,
-      page_number * page_size
-    ),
-    current: parseInt(page_number),
-    pages: Math.ceil(lengthOfOrder / page_size),
-  };
-  return OrderObj;
-}
+//   //obj
+//   const OrderObj = {
+//     Order: OrderArray.slice(
+//       (page_number - 1) * page_size,
+//       page_number * page_size
+//     ),
+//     current: parseInt(page_number),
+//     pages: Math.ceil(lengthOfOrder / page_size),
+//   };
+//   return OrderObj;
+// }
 
 //Cancel Order
 async function CancelOrder(id, userId) {
-  const pool = await ConenctedToSql();
-
-  //Getall Admin Order
-  const CancelOrder = await pool
-    .request()
-    .input("userId", sql.Int, userId)
-    .input("id", sql.Int, id)
-    .query(querys.CANCELORDERS);
-
-  const OrderProducts = await pool
-    .request()
-    .input("orderId", sql.Int, id)
-    .query(querys.GETORDERPRODUCTSBYORDERID);
-
-  OrderProducts.recordset.forEach((element) => {
-    if (
-      element.Status != null &&
-      element.Status == true &&
-      element.IsCancel != true
-    ) {
-      const Products = JSON.parse(element.OrderProducts);
-      Products.forEach((product) => {
-        UpdateProductQuantityAfterCancel(
-          product.ProductId,
-          product.Quantity,
-          element.AdminId
-        ).then((data) => {
-          // console.log(`update Product Quantity`);
+  try {
+    const pool = await ConenctedToSql();
+    const transaction = new sql.Transaction();
+    transaction.begin(async (err) => {
+      console.log("Transaction start successfully");
+      if (err) {
+        transaction.rollback((err) => {
+          console.log("Transaction rollback successfully");
         });
-        updateTrans(element.OrderId, element.AdminId).then((data) => {
-          // console.log("Trans Update");
-        });
+        console.log("Transaction begin error ", err);
+        return 0;
+      }
+      //set CancelOrder to true
+      const CancelOrder = await pool
+        .request()
+        .input("userId", sql.Int, userId)
+        .input("id", sql.Int, id)
+        .query(querys.CANCELORDERS);
+
+      const OrderProducts = await pool
+        .request()
+        .input("orderId", sql.Int, id)
+        .query(querys.GETORDERPRODUCTSBYORDERID);
+
+      OrderProducts.recordset.forEach((element) => {
+        if (
+          element.Status != null &&
+          element.Status == true &&
+          element.IsCancel != true &&
+          element.DeliveryDate != null
+        ) {
+          const Products = JSON.parse(element.OrderProducts);
+          Products.forEach((product) => {
+            UpdateProductQuantityAfterCancel(
+              product.ProductId,
+              product.Quantity,
+              element.AdminId
+            ).then((data) => {
+              // console.log(`update Product Quantity`);
+            });
+            updateTrans(element.OrderId, element.AdminId).then((data) => {
+              // console.log("Trans Update");
+            });
+          });
+        }
       });
-    }
-  });
-  return true;
+      transaction.commit((err) => {
+        if (err) {
+          transaction.rollback((err) => {
+            console.log("Transaction rollback successfully");
+          });
+          return 0;
+        }
+        console.log("Transaction committed successfully");
+      });
+
+      return 1;
+    });
+  } catch (error) {
+    transaction.rollback((err) => {
+      console.log("transaction rolled back successfully");
+    });
+    console.log("Error : " + error.message);
+    return 0;
+  }
 }
 
 //Update Product Quantity
