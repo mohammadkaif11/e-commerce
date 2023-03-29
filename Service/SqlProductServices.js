@@ -1054,7 +1054,7 @@ async function ConfirmOrder(userId, obj) {
 //   return OrderObj;
 // }
 
-//Cancel Order
+//Cancel Order with transaction
 async function CancelOrder(id, userId) {
   try {
     const pool = await ConenctedToSql();
