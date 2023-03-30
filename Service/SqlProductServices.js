@@ -325,6 +325,7 @@ async function UpdateOrders(orderId, adminId, data) {
                   // console.log(data);
                 }
               );
+              //here we can change the Product Status if ProductQuantity is zero
             }
           });
         } else if (IsCancel == false && Trans.recordset[0].IsCancel == true) {
@@ -347,6 +348,7 @@ async function UpdateOrders(orderId, adminId, data) {
                   // console.log(data);
                 }
               );
+              //here we can change the Product Status if ProductQuantity is zero
             }
           });
         }
@@ -372,6 +374,7 @@ async function UpdateOrders(orderId, adminId, data) {
                   // console.log(data);
                 }
               );
+               //here we can change the Product Status if ProductQuantity is zero
             }
           }
         });
