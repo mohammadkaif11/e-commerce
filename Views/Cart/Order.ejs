@@ -45,7 +45,7 @@
               >
                 <p>
                   <span class="h4"> OrderNo-</span
-                  ><span class="h4"><%= element.OrderId %></span>
+                  ><span class="h4"><%= element.Id %></span>
                 </p>
                 <p>
                   <span class="h4"> Address-</span
@@ -57,14 +57,14 @@
                 </p>
                 <p>
                   <span class="h4"> OrderDate-</span
-                  ><span class="h4"><%= element.OrderDate %></span>
+                  ><span class="h4"><%= element.Date %></span>
                 </p>
               </div>
             </div>
           </div>
         </div>
-        <% element.Products.forEach(function(productObj ,index) { %>
-          <% productObj.Products.forEach(function(product ,index) { %>
+        <% element.OrderProducts.forEach(function(productObj ,index) { %>
+          <% productObj.OrderProducts.forEach(function(product ,index) { %>
             <div style="background-color: white" class="card mb-4">
               <div class="card-body p-4">
                 <div class="row align-items-center">
@@ -136,7 +136,7 @@
               <% if(element.CustomerCancel!=true){%>
                 <div class="float-start">
                   <p class="mb-0 me-5 d-flex align-items-center">
-                    <a type="button" class="btn btn-danger" href="/CancelOrder/<%= element.OrderId %>">Cancel Order</a>
+                    <a type="button" class="btn btn-danger" href="/CancelOrder/<%= element.Id %>">Cancel Order</a>
                   </p>
                 </div>
                 <%}else{%>

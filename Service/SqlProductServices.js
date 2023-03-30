@@ -496,144 +496,107 @@ async function GetOrder(userId, page_number) {
 
   let TotalOrderTotal = TotalOrder.recordset[0].TOTAL;
 
-  //get UserOrder
-  const response = await pool
+  const orders = await pool
     .request()
     .input("UserId", sql.Int, userId)
     .input("Page", sql.Int, page_number)
     .input("Size", sql.Int, pagesize)
-    .execute("sp_getuserorder");
-  const data = response.recordset;
+    .execute("sp_NewgetuserOrder");
 
-  let OrderId = -1;
-  let ResponseObj = [];
-  let Obj = {};
+  //Orders
+  const Orders = orders.recordset;
 
-  //Create Order Object
-  for (let i = 0; i < data.length; i++) {
-    if (data[i].OrderId === OrderId) {
-      if (OrderId === -1) {
-        Obj = {
-          Address: data[i].Address,
-          ModeOfpayment: data[i].ModePayment,
-          Pincode: data[i].Pincode,
-          OrderDate: new Date(data[i].Date).toDateString(),
-          OrderId: data[i].OrderId,
-          CustomerCancel: data[i].CustomerCancel,
-          Products: [],
-          TotalAmount: data[i].TotalAmount,
-        };
-        let ProductDetails = {
-          Products: JSON.parse(data[i].OrderProducts),
-          Status: data[i].Status,
-          DeliveryDate: data[i].DeliveryDate,
-          IsCancel: data[i].IsCancel,
-        };
+  const orderproducts = await pool
+    .request()
+    .input("UserId", sql.Int, userId)
+    .input("Page", sql.Int, page_number)
+    .input("Size", sql.Int, pagesize)
+    .execute("sp_GetUserOrderProducts");
 
-        Obj.Products.push(ProductDetails);
-        ResponseObj.push(Obj);
-        OrderId = data[i].OrderId;
-      } else {
-        Obj.TotalAmount += data[i].TotalAmount;
-        let ProductDetails = {
-          Products: JSON.parse(data[i].OrderProducts),
-          Status: data[i].Status,
-          DeliveryDate: data[i].DeliveryDate,
-          IsCancel: data[i].IsCancel,
-        };
-        Obj.Products.push(ProductDetails);
-        OrderId = data[i].OrderId;
+  //const OrderProducts
+  const OrderProducts = orderproducts.recordset;
+
+  //Parse OrderProducts
+  OrderProducts.forEach(function (element) {
+    element.OrderProducts = JSON.parse(element.OrderProducts);
+  });
+
+  //Adding OrderProducts in order
+  Orders.forEach((order) => {
+    order.Date=new Date(order.Date).toDateString();
+    let order_Products = OrderProducts.filter((orderProduct) => {
+      if (orderProduct.OrderId === order.Id) {
+        return orderProduct;
       }
-    } else {
-      Obj = {
-        Address: data[i].Address,
-        ModeOfpayment: data[i].ModePayment,
-        Pincode: data[i].Pincode,
-        OrderDate: new Date(data[i].Date).toDateString(),
-        OrderId: data[i].OrderId,
-        CustomerCancel: data[i].CustomerCancel,
-        Products: [],
-        TotalAmount: data[i].TotalAmount,
-      };
-      let ProductDetails = {
-        Products: JSON.parse(data[i].OrderProducts),
-        Status: data[i].Status,
-        DeliveryDate: data[i].DeliveryDate,
-        IsCancel: data[i].IsCancel,
-      };
-      Obj.Products.push(ProductDetails);
-      ResponseObj.push(Obj);
-      OrderId = data[i].OrderId;
-    }
-  }
+    });
+    order.OrderProducts = order_Products;
+  });
 
   let Status = true;
-  let DeliveryDate = null;
+  let DeliveryDate = null; 
 
-  //Delivery Date and Status Update
-  for (let i = 0; i < ResponseObj.length; i++) {
-    let TempProducts = ResponseObj[i].Products;
-
-    for (let i = 0; i < TempProducts.length; i++) {
-      if (TempProducts[i].Status == null) {
+  //Mapping images and Order Id status delivery date or status Message
+  Orders.forEach((order) => {
+    let TotalAmount=0;
+    order.OrderProducts.forEach((orderProduct) => {
+      TotalAmount += orderProduct.TotalAmount;
+      //adding status to order
+      if (orderProduct.Status == null) {
         Status = false;
       }
+
+      //adding delivery date to order product
       if (
-        TempProducts[i].DeliveryDate !== null &&
-        new Date(TempProducts[i].DeliveryDate) > new Date(DeliveryDate)
+        orderProduct.DeliveryDate !== null &&
+        new Date(orderProduct.DeliveryDate) > new Date(DeliveryDate)
       ) {
-        DeliveryDate = new Date(TempProducts[i].DeliveryDate).toDateString();
+        DeliveryDate = new Date(orderProduct.DeliveryDate).toDateString();
       }
-    }
-
-    if (ResponseObj[i].CustomerCancel == true) {
-      ResponseObj[i].IsAllStatusUpdate = true;
-      ResponseObj[i].Message = "Order Cancelled";
-      ResponseObj[i].OrderStatus = "Updated";
-      ResponseObj[i].DeliveryDate = null;
-    } else if (Status == true && DeliveryDate != null) {
-      ResponseObj[i].DeliveryDate = DeliveryDate;
-      ResponseObj[i].IsAllStatusUpdate = true;
-      ResponseObj[i].Message = "Approved By seller";
-      ResponseObj[i].OrderStatus = "Updated";
-    } else if (Status == true && DeliveryDate == null) {
-      ResponseObj[i].DeliveryDate = null;
-      ResponseObj[i].IsAllStatusUpdate = true;
-      ResponseObj[i].Message = "seller  Cancel Your Order";
-      ResponseObj[i].OrderStatus = "Updated";
-    } else {
-      ResponseObj[i].DeliveryDate = null;
-      ResponseObj[i].IsAllStatusUpdate = false;
-      ResponseObj[i].Message = "Your Order is not Updated";
-      ResponseObj[i].OrderStatus = "Not Updated yet";
-    }
-  }
-
-  //Product image maps
-  for (let i = 0; i < ResponseObj.length; i++) {
-    let TempProducts = ResponseObj[i].Products;
-    for (let i = 0; i < TempProducts.length; i++) {
-      let Productarray = TempProducts[i].Products;
-      for (let j = 0; j < Productarray.length; j++) {
-        var product = products.recordset.find((productObj) => {
-          if (Productarray[j].ProductId == productObj.Id) {
-            return productObj;
+ 
+      orderProduct.OrderProducts.forEach((orderProductProduct) => {
+        let product = products.recordset.find((product) => {
+          if (orderProductProduct.ProductId == product.Id) {
+            return product;
           }
         });
-
         if (product) {
-          Productarray[j].ProductName = product.ProductName;
-          Productarray[j].ImageUrl = product.ImageUrl;
-          Productarray[j].Price = product.ProductPrice;
-          Productarray[j].ProductTotal =
-            Productarray[j].Quantity * product.ProductPrice;
+          orderProductProduct.ProductName = product.ProductName;
+          orderProductProduct.ImageUrl = product.ImageUrl;
+          orderProductProduct.Price = product.ProductPrice;
+          orderProductProduct.ProductTotal =
+            orderProductProduct.Quantity * product.ProductPrice;
         }
-      }
-    }
-  }
+      });
 
+      if (orderProduct.CustomerCancel == true) {
+        orderProduct.IsAllStatusUpdate = true;
+        orderProduct.Message = "Order Cancelled";
+        orderProduct.OrderStatus = "Updated";
+        orderProduct.DeliveryDate = null;
+      } else if (Status == true && DeliveryDate != null) {
+        orderProduct.DeliveryDate = DeliveryDate;
+        orderProduct.IsAllStatusUpdate = true;
+        orderProduct.Message = "Approved By seller";
+        orderProduct.OrderStatus = "Updated";
+      } else if (Status == true && DeliveryDate == null) {
+        orderProduct.DeliveryDate = null;
+        orderProduct.IsAllStatusUpdate = true;
+        orderProduct.Message = "seller  Cancel Your Order";
+        orderProduct.OrderStatus = "Updated";
+      } else {
+        orderProduct.DeliveryDate = null;
+        orderProduct.IsAllStatusUpdate = false;
+        orderProduct.Message = "Your Order is not Updated";
+        orderProduct.OrderStatus = "Not Updated yet";
+      }
+    });
+    order.TotalAmount=TotalAmount;
+  });
+  
+
+  
   const OrderObj = {
-    Order: ResponseObj,
+    Order: Orders,
     current: parseInt(page_number),
     pages: Math.ceil(TotalOrderTotal / pagesize),
   };
