@@ -721,7 +721,7 @@ function UpdateAddCart(req, res) {
         if(data){
           res.json({ Msg:"update successfully",IsUpdateSuccess: true});
         }else{
-          res.send({ Msg:"Product quantity is not enough",IsUpdateSuccess:false});
+          res.send({ Msg:"Product out of stock ",IsUpdateSuccess:false});
         }
       })
       .catch((error) => {
