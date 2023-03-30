@@ -26,9 +26,18 @@
             <h5 class="card-title">Name:<%= element.ProductName %></h5>
             <span style="font-weight: bold;">Price:<%= element.ProductPrice %></span><br>
             <span style="font-weight: bold;">Quantity:<%= element.Quantity %></span>
+            <% if(element.IsActive==true) { %>
+              <span style="font-weight: bold; background-color: green;color: white;border-radius: 10px; padding: 3px; margin: 3px;">Active</span><br>
+              <% }else{ %>
+                <span style="font-weight: bold;">InActive</span><br>
+                <span style="font-weight: bold; background-color: red;color: white;border-radius: 10px; padding: 3px; margin: 3px;">InActive</span><br>
+                <% } %>
             <div class="button">
-              <a href="/AdminGetById/<%= element.Id %>" class="btn btn-primary">Updates</a>
-              <a href="/AdmindeleteProduct/<%= element.Id %>" class="btn btn-primary">Delete</a>  
+              <a href="/AdminGetById/<%= element.Id %>" class="btn btn-primary my-1">Updates</a>
+              <a href="/AdmindeleteProduct/<%= element.Id %>" class="btn btn-primary my-1">Delete</a>  
+              <% if(element.IsActive==false) { %>
+                <a href="/AdminChangeStatus/<%= element.Id %>" class="btn btn-primary my-1">Change Status</a>  
+                <% }%>
             </div>
         </div>
         </div>
@@ -79,3 +88,7 @@
    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
     </body>
 </html>
+
+<script>
+  
+</script>

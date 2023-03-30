@@ -84,6 +84,20 @@ router.get("/bucket/:page", AdminRole, OpenBucket);
 router.get("/updateOrder/:orderId", AdminRole, GetOrderbyId);
 router.post("/updateOrder/:orderId", AdminRole, UpdateOrderStatus);
 router.get("/transactionhistory/:page", AdminRole, TransactionHistory);
+router.get("/AdminChangeStatus/:id",AdminRole, AdminChangeStatus);
+
+async function AdminChangeStatus(req,res){
+ try {
+  const id = req.params.id;
+  const UserId = req.session.userId;
+  SqlproductService.UpdateStatus(id,UserId).then(function(result){
+    res.redirect('/Admin');
+  })
+ } catch (error) {
+  console.log("Error : " + error);
+  res.render("Error/error.ejs");
+ }
+}
 
 // User Get all Product
 async function PageView(req, res) {

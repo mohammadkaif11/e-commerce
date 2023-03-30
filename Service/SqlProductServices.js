@@ -71,11 +71,11 @@ async function UpdateProduct(data, UserId) {
 async function DeleteProduct(id, UserId) {
   const pool = await ConenctedToSql();
   const productById = await GetProductById(id);
-  const params = {
-    Bucket: BUCKET_NAME,
-    Key: productById[0].ImageKey,
-  };
-  await s3.deleteObject(params).promise();
+  // const params = {
+  //   Bucket: BUCKET_NAME,
+  //   Key: productById[0].ImageKey,
+  // };
+  // await s3.deleteObject(params).promise();
   const response = await pool
     .request()
     .input("id", sql.Int, id)
@@ -1194,6 +1194,17 @@ async function UpdateRemoveCart(productId, userId) {
   }
 }
 
+//update Admin Status 
+async function UpdateStatus(productId,userId) {
+  const pool = await ConenctedToSql();
+  const response = await pool
+  .request()
+  .input("id", sql.Int, productId)
+  .input("userId", sql.Int, userId)
+  .query(querys.UPDATEPRODUCTSSTATUS);
+  return response.rowsAffected[0];
+}
+
 module.exports = {
   AddProduct,
   GetAllProduct,
@@ -1215,4 +1226,5 @@ module.exports = {
   CancelOrder,
   addProductsInCart,
   UpdateRemoveCart,
+  UpdateStatus
 };

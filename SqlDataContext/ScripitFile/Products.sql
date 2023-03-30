@@ -7,4 +7,5 @@ create Table Products(
 	 ImageUrl varchar(max),
       Quantity int,
       [ImageKey] varchar(max),
+      IsActive bit,
 	 );
