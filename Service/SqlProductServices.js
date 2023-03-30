@@ -718,30 +718,14 @@ async function GetAllCart(user_id) {
     .input("userId", sql.Int, user_id)
     .query(querys.GETCART);
 
-  if (cart.recordset.length > 0) {
-    let CartsProducts = JSON.parse(cart.recordset[0].CartProducts);
-    cart.recordset[0].CartProducts = CartsProducts;
+  const response = await pool
+    .request()
+    .input("UserId", sql.Int, user_id)
+    .execute("sp_getUserCartProduct");
 
-    cart.recordset[0].CartProducts.forEach((cartObj) => {
-      var product = products.recordset.find((productObj) => {
-        if (cartObj.ProductId == productObj.Id) {
-          return productObj;
-        }
-      });
-      if (product != undefined) {
-        cartObj.ProductId = product.Id;
-        cartObj.ProductName = product.ProductName;
-        cartObj.ProductDescription = product.ProductDescription;
-        cartObj.ProductPrice = product.ProductPrice;
-        cartObj.ImageUrl = product.ImageUrl;
-        responsObj.push(cartObj);
-      }
-    });
+  console.log("response from pool: ", response.recordset);
 
-    return responsObj;
-  } else {
-    return [];
-  }
+  return response.recordset;
 }
 
 //Remove cart by User Done
