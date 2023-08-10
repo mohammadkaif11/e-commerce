@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 const CheckUserLogin = require("../Middleware/UserLogin");
 const SqlproductService = require("../Service/SqlProductServices");
+const VerfiyToken=require("../Middleware/VerfiyToken");
 const AdminRole = require("../Middleware/AdminRole");
 
 //Aws Configuration
@@ -12,6 +13,7 @@ const multerS3 = require("multer-s3");
 const multer = require("multer");
 const path = require("path");
 const { error } = require("console");
+const verifyToken = require("../Middleware/VerfiyToken");
 const ID = process.env.AWS_ID;
 const SECRET = process.env.AWS_SECRET;
 const BUCKET_NAME = process.env.BACKET_NAME;
@@ -25,78 +27,89 @@ const s3 = new aws.S3({
 });
 
 
-
 //using Local folders uploads
 // const upload = multer({ dest: "uploads/" });
 //upload middleware
 
-
-const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: BUCKET_NAME,
-    key: function (req, file, cb) {
-      cb(
-        null,
-        path.basename(file.originalname, path.extname(file.originalname)) +
-          "-" +
-          Date.now() +
-          path.extname(file.originalname)
-      );
-    },
-  }),
-});
+  const upload = multer({
+    storage: multerS3({
+      s3: s3,
+      bucket: BUCKET_NAME,
+      key: function (req, file, cb) {
+        cb(
+          null,
+          path.basename(file.originalname, path.extname(file.originalname)) +
+            "-" +
+            Date.now() +
+            path.extname(file.originalname)
+        );
+      },
+    }),
+  });
+  
 
 router.get("/", CheckUserLogin, productView);
 router.get("/Product/:page", CheckUserLogin, PageView);
 router.get("/CheckCart", CheckUserLogin, OpenCart);
-router.get("/addCart/:id", CheckUserLogin, AddCart);
-router.get("/GetById/:id", CheckUserLogin, GetById);
 router.get("/placedOrder", CheckUserLogin, PlacedOrder);
 router.get("/ConfirmPage", CheckUserLogin, ConfirmPage);
 router.post("/ConfirmPage", CheckUserLogin, ConfirmPagePost);
 router.get("/checkOrder/:page", CheckUserLogin, Order);
-router.get("/RemoveCart/:id", CheckUserLogin, RemoveCart);
 router.get("/CancelOrder/:id", CheckUserLogin, CancelOrder);
-router.get("/GetCartdata", CheckUserLogin, GetCartdata);
 
 
-//--------------Api--------------------------------
-//+1,-1 carts
-router.get("/updateAddCart/:id", CheckUserLogin, UpdateAddCart);
-router.get("/updateRemoveCart/:id", CheckUserLogin, UpdateRemoveCart);
-//Get paginated data
-router.post("/getProduct", CheckUserLogin, getProducts);
 
 //Admin Routes
-router.post(
-  "/AddProduct",
-  AdminRole,
-  upload.single("product-image"),
-  AddProduct
-);
-
-router.get("/Admin", AdminRole, AdminView);
-router.get("/AdminGetById/:id", AdminRole, AdminGetById);
-router.post("/AdminUpdateProduct", AdminRole, UpdateProduct);
-router.get("/AdmindeleteProduct/:id", AdminRole, DeleteAdmin);
 router.get("/bucket/:page", AdminRole, OpenBucket);
 router.get("/updateOrder/:orderId", AdminRole, GetOrderbyId);
 router.post("/updateOrder/:orderId", AdminRole, UpdateOrderStatus);
 router.get("/transactionhistory/:page", AdminRole, TransactionHistory);
-router.get("/AdminChangeStatus/:id",AdminRole, AdminChangeStatus);
+
+
+//-----------------api -----------------//
+router.post("/getProduct", VerfiyToken, getProducts);
+router.get("/addCart/:id", VerfiyToken, AddCart);
+router.get("/GetCartdata",VerfiyToken, GetCartdata);
+//+1,-1 carts
+router.get("/updateAddCart/:id", VerfiyToken, UpdateAddCart);
+router.get("/updateRemoveCart/:id", VerfiyToken, UpdateRemoveCart);
+router.get("/GetById/:id", VerfiyToken, GetById);
+router.get("/RemoveCart/:id", VerfiyToken, RemoveCart);
+
+
+//--------Admin routes  api--------------//
+router.get("/Admin", verifyToken, AdminView);
+router.get("/AdmindeleteProduct/:id", verifyToken, DeleteAdmin);
+router.get("/AdminChangeStatus/:id",verifyToken, AdminChangeStatus);
+router.put("/AdminUpdateProduct", verifyToken, UpdateProduct);
+router.post(
+  "/AddProduct",
+  verifyToken,
+  upload.single("product-image"),
+  AddProduct
+);
+router.get("/AdminGetById/:id", VerfiyToken, AdminGetById);
+router.post("/transactionhistory/:page", verifyToken, TransactionHistory);
+
+
+
+
+
+
+
+
 
 async function AdminChangeStatus(req,res){
  try {
   const id = req.params.id;
-  const UserId = req.session.userId;
+  const UserId = req.userId;
   SqlproductService.UpdateStatus(id,UserId).then(function(result){
-    res.redirect('/Admin');
+    return res.status(200).json({message:"success"})
   })
  } catch (error) {
   console.log("Error : " + error);
-  res.render("Error/error.ejs");
- }
+  return res.status(500).json({message:"Internal Server Error"})
+}
 }
 
 // User Get all Product
@@ -133,31 +146,25 @@ async function getProducts(req, res) {
   }
 }
 
+
 //Admin User Get all Product..
 function AdminView(req, res) {
   try {
-    const UserId = req.session.userId;
+    const UserId = req.userId;
     SqlproductService.GetAllAdminProduct(UserId)
       .then((products) => {
-        res.render("Admin/homePage.ejs", {
-          products: products,
-          message: "",
-          username: req.session.userName,
-          role: req.session.role,
-        });
+        res.status(200).json({ products:products,message: 'Success' });
+        return products;
       })
       .catch((error) => {
-        res.render("Admin/homePage.ejs", {
-          products: products,
-          username: req.session.userName,
-          message: "Refresh page and try again",
-          role: req.session.role,
-        });
+        res.status(200).json({ products:[],message: 'Failed' });
+        return products;
       });
   } catch (error) {
     console.log("Error : " + error);
-    res.render("Error/error.ejs");
-  }
+    res.status(200).json({ products:[],message: 'Internal server error' });
+    return products;
+    }
 }
 
 //Admin User Get by Id
@@ -191,40 +198,46 @@ function AdminGetById(req, res) {
 //Admin User update product
 function UpdateProduct(req, res) {
   try {
-    const UserId = req.session.userId;
+    const UserId = req.userId;
     SqlproductService.UpdateProduct(req.body, UserId)
       .then((response) => {
-        res.redirect("/Admin");
+        res.status(200).json({message:"successfully updated product"});
+        return;
       })
       .catch((error) => {
         console.log("Error : " + error);
-        res.redirect("/Admin");
+        res.status(400).json({message:"failed updated product"});
+        return
       });
   } catch (error) {
     console.log("Error : " + error);
-    res.render("Error/error.ejs");
+    res.status(500).json({message:"Internal server error"});
   }
 }
 
 //Admin User delete product
 function DeleteAdmin(req, res) {
   try {
-    const UserId = req.session.userId;
+    const UserId = req.userId;
     SqlproductService.DeleteProduct(req.params.id, UserId)
       .then((response) => {
-        res.redirect("/Admin");
+        return res.status(200).json({Msg:"success to delete product"});
       })
       .catch((error) => {
-        res.redirect("/Admin");
+        return res.status(400).json({Msg:"failed to delete product"});
       });
   } catch (error) {
-    res.render("Error/error.ejs");
+    return res.status(500).json({Msg:"Internal Server Error"});
   }
 }
 
 //Admin Add Products
 function AddProduct(req, res) {
   try {
+    if(!req.file){
+      res.status(400).json({message:"File is required filled in"});
+      return;
+    }
     let url = req.file.location;
     const key = req.file.key;
     if (
@@ -234,33 +247,26 @@ function AddProduct(req, res) {
       req.body.ProductDescription == "" ||
       req.body.Quantity == 0
     ) {
-      res.render("Admin/homePage.ejs", {
-        products: [],
-        username: req.session.userName,
-        message:
-          "File,Name or ProductName ,ProductDescription or Quantity is required filed",
-      });
+      res.status(400).json({message:"File,Name or ProductName ,ProductDescription or Quantity is required filed"});
+      return;
     } else {
       req.body.url = url;
       req.body.key = key;
-      req.body.UserId = req.session.userId;
+      req.body.UserId = req.userId;
       SqlproductService.AddProduct(req.body)
         .then((data) => {
-          res.redirect("/Admin");
+          res.status(200).json({message:"create product successfully"});
         })
         .catch((error) => {
           console.log("Error : " + error);
-          res.render("Admin/homePage.ejs", {
-            products: [],
-            username: req.session.userName,
-            message: "Refresh page and try again",
-            role: req.session.role,
-          });
+          res.status(400).json({message:"create product failed"});
+          return;
         });
     }
   } catch (error) {
     console.log("Error : " + error);
-    res.render("Error/error.ejs");
+    res.status(400).json({message:"Internal Server Error"});
+    return;
   }
 }
 
@@ -330,11 +336,11 @@ function GetOrderbyId(req, res) {
 function TransactionHistory(req, res) {
   try {
     const page = req.params.page;
-    const UserId = req.session.userId;
-    const CustomerCancel = req.query.CustomerCancel || "";
-    const OrderDate = req.query.OrderDate || "";
-    const YourCancel = req.query.YourCancel || "";
-    SqlproductService.GetAllTrans(
+    const UserId = req.userId;
+    const CustomerCancel = req.body.CustomerCancel;
+    const OrderDate = req.body.OrderDate;
+    const YourCancel = req.body.YourCancel;
+    SqlproductService.GetAllTransForApi(
       UserId,
       OrderDate,
       CustomerCancel,
@@ -342,34 +348,16 @@ function TransactionHistory(req, res) {
       page
     )
       .then((data) => {
-        res.render("Admin/Trans.ejs", {
-          Transaction: data.ResponseData,
-          message: "",
-          username: req.session.userName,
-          role: req.session.role,
-          current: data.current,
-          pages: data.pages,
-          OrderDate: OrderDate,
-          CustomerCancel: CustomerCancel,
-          YourCancel: YourCancel,
-        });
+        res.status(200).json({"message":"success",data:data.ResponseData,current:data.current,pages:data.pages});
+        return ;
       })
       .catch((error) => {
-        res.render("Admin/Trans.ejs", {
-          Transaction: [],
-          message: "Some Error occurred",
-          username: req.session.userName,
-          role: req.session.role,
-          current: data.current,
-          pages: data.pages,
-          OrderDate: OrderDate,
-          CustomerCancel: CustomerCancel,
-          YourCancel: YourCancel,
-        });
+        res.status(400).json({"message":"failed",data:[],current:0,pages:1});
+      return ;
       });
   } catch (error) {
     console.log("Error : " + error);
-    res.render("Error/error.ejs");
+    res.status(500).json({"message":"server error",data:[],current:0,pages:1});
   }
 }
 
@@ -416,31 +404,20 @@ function GetById(req, res) {
   try {
     const id = req.params.id;
     if (id == "" || id == null) {
-      res.render("Product/ProductDetails.ejs", {
-        products: [],
-        message: "Id is not null",
-      });
+    return res.status(400).json({Message:"Login required",data:null});
     } else {
       SqlproductService.GetProductByIds(id)
         .then((response) => {
-          res.render("Product/ProductDetails.ejs", {
-            products: response,
-            message: "",
-            role: req.session.role,
-          });
+          return res.status(200).json({Message:"successfully get data",data:response});
         })
         .catch((error) => {
           console.log("Error : " + error);
-          res.render("Product/ProductDetails.ejs", {
-            products: [],
-            message: "Refresh the page and try again",
-            role: req.session.role,
-          });
+          return res.status(400).json({Message:"successfully get data",data:null});
         });
     }
   } catch (error) {
     console.log("Error : " + error);
-    res.render("Error/error.ejs");
+    return res.status(500).json({Message:"something happen in backend",data:null});
   }
 }
 
@@ -497,7 +474,7 @@ function OpenCart(req, res) {
 //function get Cart data
 function GetCartdata(req, res) {
   try {
-    let userId = req.session.userId;
+    let userId = req.userId;
     if (userId == "" || userId == null) {
       res.json({ Msg: "Invalid user Id", Cart: [] });
     } else {
@@ -557,22 +534,19 @@ function _OpenCart(req, res) {
 function AddCart(req, res) {
   try {
     let productId = req.params.id;
-    let userId = req.session.userId;
+    let userId = req.userId;
     const AdminId = req.query.adminId;
     SqlproductService.AddtoCart(productId, userId, AdminId)
       .then((response) => {
-        res.redirect("/CheckCart");
+        res.status(200).json({ Msg: "Added successfully",Error:null });
       })
       .catch((error) => {
         console.log("Error : " + error);
-        res.render("Cart/Cart.ejs", {
-          Cart: [],
-          message: "some error try again",
-        });
+        res.status(400).json({ Msg: "Something happen in backend", Error:error.message });
       });
   } catch (error) {
     console.log("Error : " + error);
-    res.render("Error/error.ejs");
+    res.status(500).json({ Msg: "Something happen in backend", Error:error.message });
   }
 }
 
@@ -580,7 +554,7 @@ function AddCart(req, res) {
 function RemoveCart(req, res) {
   try {
     let productId = req.params.id;
-    let userId = req.session.userId;
+    let userId = req.userId;
     SqlproductService.RemoveCart(productId, userId)
       .then((data) => {
         res.send({ Msg: "Cart deleted successfully" });
@@ -729,9 +703,10 @@ function CancelOrder(req, res) {
 function UpdateAddCart(req, res) {
   try {
     let productId = req.params.id;
-    let userId = req.session.userId;
+    let userId = req.userId;
     SqlproductService.addProductsInCart(productId, userId)
       .then((data) => {
+        console.log('----------Update add cart: ' + JSON.stringify(data));
         if(data){
           res.json({ Msg:"update successfully",IsUpdateSuccess: true});
         }else{
@@ -752,7 +727,7 @@ function UpdateAddCart(req, res) {
 function UpdateRemoveCart(req, res) {
   try {
     let productId = req.params.id;
-    let userId = req.session.userId;
+    let userId = req.userId;
     SqlproductService.UpdateRemoveCart(productId, userId)
       .then((data) => {
         res.send({ Msg: "update cart successfully" });

@@ -1208,6 +1208,68 @@ async function UpdateStatus(productId,userId) {
   return response.rowsAffected[0];
 }
 
+//Get Transaction
+async function GetAllTransForApi(
+  adminId,
+  orderDate,
+  customerCancel,
+  sellerCancel,
+  PageNo
+) {
+  try {
+    let pageno = PageNo;
+    let pagesize = 10;
+    let OrderDate = orderDate;
+    let CustomerCancel = customerCancel==true ? 1 : 0;
+    let SellerCancel = sellerCancel==true ? 1 : 0;
+    if(CustomerCancel==0 && SellerCancel==0){
+      CustomerCancel=null;
+      SellerCancel=null;
+    }
+
+    const pool = await ConenctedToSql();
+    const response = await pool
+      .request()
+      .input("AdminId", sql.Int, adminId)
+      .input("CustomerCancel", sql.Bit, CustomerCancel)
+      .input("SellerCancel", sql.Bit, SellerCancel)
+      .input("DeliveryDate", sql.Date, OrderDate)
+      .input("Page", sql.Int, pageno)
+      .input("Size", sql.Int, pagesize)
+      .execute("sp_GetTransaction");
+
+    //get total transactions for seller
+    const TotalTransaction = await pool
+      .request()
+      .query(`select Count(*) as Total from trans where AdminId=${adminId}`);
+    const TotalTransactionNo = TotalTransaction.recordset[0].Total;
+    const transaction = response.recordset;
+
+    //convert datetime to string
+    transaction.forEach(function (element) {
+      element.Date = new Date(element.Date).toDateString();
+      element.OrderDate = new Date(element.OrderDate).toDateString();
+    });
+
+    //Sending obj
+    const obj = {
+      ResponseData: transaction,
+      current: parseInt(PageNo),
+      pages: Math.ceil(TotalTransactionNo / pagesize),
+    };
+
+    return obj;
+  } catch (error) {
+    console.log("Error: " + error.message);
+    const obj = {
+      ResponseData: [],
+      current: 1,
+      pages: 0,
+    };
+    return obj;
+  }
+}
+
 module.exports = {
   AddProduct,
   GetAllProduct,
@@ -1229,5 +1291,6 @@ module.exports = {
   CancelOrder,
   addProductsInCart,
   UpdateRemoveCart,
-  UpdateStatus
+  UpdateStatus,
+  GetAllTransForApi
 };
