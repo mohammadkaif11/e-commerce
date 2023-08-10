@@ -114,7 +114,7 @@ function ForgetPasswordEmail(req, res) {
                 isValidation: true,
               });
             } else {
-              res.render("EmailView/EmailPage.ejs", {
+              res.render("Emailview/EmailPage.ejs", {
                 message: "Forget password link have send",
               });
             }
@@ -202,7 +202,7 @@ function ForgetPassword(req, res) {
 
 //VerfiyEmailView after singup
 function EmailPageView(req, res, next) {
-  res.render("EmailView/EmailPage.ejs", {
+  res.render("Emailview/EmailPage.ejs", {
     message: "please verify your mail we have sended link",
   });
 }
